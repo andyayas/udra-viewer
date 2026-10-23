@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>UDRA</title>
+<meta name="description" content="UDRA client body-scan viewer (prototype). Anatomy based on BodyParts3D, © The Database Center for Life Science, CC BY 4.0.">
+<meta name="theme-color" content="#191B28">
+<meta name="format-detection" content="telephone=no">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap">
+<style>
+:root { color-scheme: dark; --ink: #04050B; --stage: #0D0E1A; --sheet: #191B28; }
+/* The screen runs edge to edge: the header sits under the status bar, the sheet under the home indicator. */
+/* iOS 26 can keep a strip under the home indicator that the page can't draw into; it takes its colour from the
+   page background, so that background is the sheet colour and the strip reads as part of the sheet. */
+html { height: 100%; background: var(--sheet); }
+#safe { position: fixed; left: 0; top: 0; width: 0; visibility: hidden; pointer-events: none;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { position: fixed; inset: 0; margin: 0; background: var(--sheet); overflow: hidden; overscroll-behavior: none; color: #fff;
+  font-family: 'Sora', system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+#stage { position: fixed; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background: var(--stage); touch-action: manipulation; }
+#phone { position: absolute; left: 0; top: 0; width: 412px; transform-origin: 0 0; overflow: hidden; }
+@media (min-width: 600px) { #phone { border-radius: 28px; box-shadow: 0 30px 80px rgba(0,0,0,0.55); } }
+button:focus-visible { outline: 2px solid #64E0FF; outline-offset: 2px; }
+
+body{margin:0}
+.udra-scan{animation:udraScan 2.4s cubic-bezier(.45,0,.55,1) infinite}
+.udra-breathe{animation:udraBreathe 1.8s ease-in-out infinite alternate}
+@keyframes udraScan{0%{transform:translateY(0)}100%{transform:translateY(500px)}}
+@keyframes udraBreathe{from{opacity:.6}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){.udra-scan,.udra-breathe{animation:none}}
+
+</style>
+</head>
+<body>
+<div id="safe"></div>
+<div id="stage"><div id="phone"></div></div>
+<template id="screen-tpl">
+
+<div style="position: relative; width: 412px; height: {{frameH}}px; overflow: hidden; background: #0D0E1A; color: #FFFFFF; font-family: 'Sora', system-ui, sans-serif; -webkit-font-smoothing: antialiased">
+
+<header style="position: absolute; left: 0; top: 0; width: 412px; height: {{vt}}px; box-sizing: border-box; padding-top: {{headPadTop}}px; background: radial-gradient(120% 150% at 0% 100%, rgba(20,70,220,0.55) 0%, rgba(20,70,220,0) 52%), linear-gradient(180deg, #04050B 0%, #080A16 100%); border-radius: 0 0 28px 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 -1px 0 rgba(255,255,255,0.16); display: flex; flex-direction: column; gap: 4px; z-index: 3">
+<div style="height: 60px; display: flex; align-items: center; gap: 8px; padding: 0 13px">
+<button aria-label="Back to clients" style="flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0">
+<span style="width: 38px; height: 38px; border-radius: 19px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1px 0 rgba(255,255,255,0.22); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="M11 6l-6 6 6 6"></path></svg></span>
+</button>
+<div aria-hidden="true" style="flex: none; width: 40px; height: 40px; margin-left: 2px; border-radius: 20px; background: #7A7A84; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; letter-spacing: 0.02em">KH</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; margin-left: 4px">
+<h1 style="margin: 0; font-size: 18px; line-height: 24px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Karim Haddad</h1>
+<p style="margin: 0; font-size: 13px; line-height: 18px; font-weight: 300; color: rgba(239,236,230,0.7)">34 yrs · 181 cm · 84.5 kg</p>
+</div>
+<button aria-label="Export scan" style="flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0">
+<span style="width: 38px; height: 38px; border-radius: 19px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1px 0 rgba(255,255,255,0.22); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); display: flex; align-items: center; justify-content: center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5"></path><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"></path></svg></span>
+</button>
+</div>
+<nav aria-label="Scan sections" style="margin: 0 16px; height: 44px; display: flex; border-radius: 22px; background: rgba(0,0,0,0.3); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16)">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<button aria-current="{{t.current}}" onClick="{{t.pick}}" style="flex: 1 1 auto; min-width: 0; height: 44px; border: 0; padding: 4px 2px; background: transparent; color: {{t.color}}; font: inherit; font-size: 13px; font-weight: {{t.weight}}; white-space: nowrap; cursor: pointer"><span style="height: 36px; display: flex; align-items: center; justify-content: center; padding: 0 9px; border-radius: 18px; background: {{t.bg}}">{{t.label}}</span></button>
+</sc-for>
+</nav>
+</header>
+
+<main onPointerDown="{{dragStart}}" onPointerUp="{{dragEnd}}" style="position: absolute; left: 0; top: {{vt}}px; width: 412px; height: {{mainH}}px; overflow: hidden; touch-action: pan-y; background: radial-gradient(ellipse 80% 55% at 50% 42%, #18275C 0%, #111833 45%, #0D0E1A 100%)">
+<div ref="{{setModelEl}}" aria-label="3D body model. Drag to turn, pinch to zoom, tap a muscle to select it." style="position: absolute; left: 0; top: 0; width: 412px; height: {{mainH}}px"></div>
+<sc-if value="{{showFlat}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 76px; top: 14px; width: 260px; height: 546px; transform-origin: 0 0; transform: translate({{tx}}px, {{ty}}px) scale({{sc}}); transition: transform 450ms cubic-bezier(.2,.8,.2,1)">
+<div style="position: absolute; left: 0; top: 0; width: 260px; height: 546px; transform-origin: 130px 273px; transform: perspective(900px) rotateY({{rot}}deg) scale({{spinScale}}); opacity: {{spinOp}}; transition: {{rotTrans}}">
+<div style="position: absolute; left: 0; top: 0; width: 260px; height: 546px; opacity: {{fatOp}}; pointer-events: none; transition: opacity 250ms ease">
+<svg viewBox="0 0 200 420" width="260" height="546" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible"><path d="{{envD}}" style="fill: #EFECE6; stroke: #EFECE6; stroke-width: 16px; stroke-linejoin: round"></path></svg>
+</div>
+<div style="position: absolute; left: 0; top: 0; width: 260px; height: 546px; opacity: {{muscleOp}}; transition: opacity 250ms ease">
+<sc-for list="{{shapes}}" as="p" hint-placeholder-count="24">
+<svg viewBox="0 0 200 420" width="260" height="546" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none"><path d="{{p.d}}" onClick="{{p.pick}}" style="fill: {{p.fill}}; stroke: {{p.stroke}}; stroke-width: 0.6px; opacity: {{p.op}}; pointer-events: {{p.pe}}; cursor: {{p.cursor}}; transition: opacity 300ms ease, fill 300ms ease"></path></svg>
+</sc-for>
+<sc-if value="{{isFront}}" hint-placeholder-val="{{ true }}">
+<svg viewBox="0 0 200 420" width="260" height="546" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; opacity: {{absLinesOp}}"><path d="M86,130 L114,130 M87,146 L113,146 M100,114 L100,166" style="fill: none; stroke: #111833; stroke-width: 1.6px; stroke-linecap: round"></path></svg>
+</sc-if>
+</div>
+<div style="position: absolute; left: 0; top: 0; width: 260px; height: 546px; opacity: {{skelOp}}; pointer-events: none; transition: opacity 250ms ease">
+<sc-if value="{{notSide}}" hint-placeholder-val="{{ true }}">
+<svg viewBox="0 0 200 420" width="260" height="546" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible"><g style="fill: none; stroke: #EFECE6; stroke-width: 2.2px; stroke-linecap: round; stroke-linejoin: round"><ellipse cx="100" cy="28" rx="12" ry="15"></ellipse><path d="M100,46 L100,178"></path><path d="M98,64 L72,68 M102,64 L128,68"></path><path d="M100,76 C86,76 79,82 79,94 M100,76 C114,76 121,82 121,94 M100,88 C88,88 81,94 81,106 M100,88 C112,88 119,94 119,106 M100,100 C90,100 84,106 84,116 M100,100 C110,100 116,106 116,116"></path><path d="M82,174 C84,190 94,198 100,198 C106,198 116,190 118,174 C110,180 90,180 82,174 Z"></path><path d="M60,76 L57,138 M140,76 L143,138 M56,146 L50,196 M144,146 L150,196"></path><path d="M90,198 L87,288 M110,198 L113,288 M86,302 L85,384 M114,302 L115,384"></path></g></svg>
+</sc-if>
+<sc-if value="{{isSide}}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 200 420" width="260" height="546" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible"><g style="fill: none; stroke: #EFECE6; stroke-width: 2.2px; stroke-linecap: round; stroke-linejoin: round"><ellipse cx="104" cy="28" rx="12" ry="15"></ellipse><path d="M98,46 C94,90 94,130 98,176"></path><path d="M98,80 C108,80 116,88 118,100 M98,92 C108,92 116,100 116,112"></path><path d="M92,172 C100,168 112,170 114,182 C110,192 98,194 92,186 Z"></path><path d="M101,74 L101,140 M101,146 L102,196 M102,192 L103,288 M101,302 L100,384"></path></g></svg>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{showLoader}}" hint-placeholder-val="{{ false }}">
+<div role="status" aria-label="{{loaderLabel}}" style="position: absolute; left: 0; top: 0; width: 412px; height: {{mainH}}px; pointer-events: none">
+<svg class="udra-breathe" viewBox="0 0 200 420" width="240" height="504" aria-hidden="true" style="position: absolute; left: 86px; top: 100px; overflow: visible">
+<defs>
+<mask id="udra-body-mask" maskUnits="userSpaceOnUse" x="-20" y="-20" width="240" height="460"><path d="{{envFront}}" style="fill: #FFFFFF; stroke: #FFFFFF; stroke-width: 7px; stroke-linejoin: round"></path></mask>
+<linearGradient id="udra-scan-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FA4FF" stop-opacity="0"></stop><stop offset="0.8" stop-color="#A8C2FF" stop-opacity="0.4"></stop><stop offset="1" stop-color="#E0E9FF" stop-opacity="0.75"></stop></linearGradient>
+</defs>
+<path d="{{envFront}}" style="fill: #243463; stroke: #243463; stroke-width: 7px; stroke-linejoin: round"></path>
+<path d="{{envFront}}" style="fill: #1A2650; stroke: #1A2650; stroke-width: 4px; stroke-linejoin: round"></path>
+<g mask="url(#udra-body-mask)"><rect class="udra-scan" x="-20" y="-90" width="240" height="90" fill="url(#udra-scan-grad)"></rect></g>
+</svg>
+<div style="position: absolute; left: 0; right: 0; top: 68px; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: 0.02em; color: rgba(239,236,230,0.85)">Preparing 3D body · {{loadPct}}%</span>
+<span style="display: block; width: 120px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.12); overflow: hidden"><span style="display: block; height: 3px; width: {{loadPct}}%; border-radius: 2px; background: #FFFFFF; transition: width 300ms ease"></span></span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{showModelNote}}" hint-placeholder-val="{{ false }}">
+<div role="status" style="position: absolute; right: 16px; top: 64px; height: 28px; display: flex; align-items: center; padding: 0 12px; border-radius: 14px; background: rgba(25,27,40,0.92); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); font-size: 12px; line-height: 16px; color: rgba(239,236,230,0.85); white-space: nowrap; z-index: 2">{{modelNote}}</div>
+</sc-if>
+
+<div style="position: absolute; right: 16px; top: 12px; display: flex; align-items: center; gap: 4px; z-index: 2">
+<sc-if value="{{cmpOn}}" hint-placeholder-val="{{ false }}">
+<button aria-label="Exit comparison" onClick="{{exitCmp}}" style="flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; padding: 0; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1px 0 rgba(255,255,255,0.2); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+</button>
+</sc-if>
+<button aria-haspopup="menu" aria-expanded="{{scanOpen}}" aria-label="{{scanAria}}" onClick="{{toggleScan}}" style="height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 12px 0 14px; border: 0; border-radius: 22px; background: {{scanBtnBg}}; box-shadow: inset 0 0 0 1px {{scanBtnRing}}, inset 0 1px 0 rgba(255,255,255,0.2); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer">
+<sc-if value="{{notCmp}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg></sc-if>
+<sc-if value="{{cmpOn}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M12 2v20"></path></svg></sc-if>
+{{scanDate}}
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform: rotate({{chevRot}}deg); transition: transform 200ms ease"><path d="M6 9l6 6 6-6"></path></svg>
+</button>
+</div>
+
+</main>
+
+<section aria-label="Region details" style="position: absolute; left: 0; bottom: 0; width: 412px; height: {{sheetHNow}}px; box-sizing: border-box; background: #191B28; border-radius: 24px 24px 0 0; box-shadow: 0 -12px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.24); display: flex; flex-direction: column; overflow: hidden; transition: {{sheetTrans}}; z-index: 2">
+<button aria-label="{{handleLabel}}" onClick="{{cycleSheet}}" onPointerDown="{{sheetDown}}" onPointerMove="{{sheetMove}}" onPointerUp="{{sheetUp}}" onPointerCancel="{{sheetUp}}" style="flex: none; width: 100%; height: 30px; border: 0; padding: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none">
+<span style="display: block; width: 40px; height: 4px; border-radius: 2px; background: rgba(239,236,230,0.55)"></span>
+</button>
+
+<sc-if value="{{noSel}}" hint-placeholder-val="{{ true }}">
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column">
+<div style="flex: none; display: flex; flex-direction: column; gap: 14px; padding-top: 2px">
+<div style="padding: 2px 20px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<h2 style="margin: 0; font-size: 16px; line-height: 22px; font-weight: 600">{{sheetTitle}}</h2>
+</div>
+<sc-if value="{{notOv}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; gap: 8px; overflow-x: auto; padding: 0 20px; scrollbar-width: none">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+<button aria-label="{{c.aria}}" onClick="{{c.pick}}" style="flex: none; height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 16px; border: 0; border-radius: 22px; background: rgba(255,255,255,0.06); box-shadow: inset 0 0 0 1px rgba(239,236,230,0.22); color: #FFFFFF; font: inherit; font-size: 14px; font-weight: 400; white-space: nowrap; cursor: pointer">{{c.label}}</button>
+</sc-for>
+</div>
+</sc-if>
+</div>
+<div ref="{{sumRef}}" style="flex: 1; min-height: 0; overflow-y: {{sumOverflow}}; box-sizing: border-box; padding: 16px 20px {{sheetPadB}}px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none; opacity: {{sumOp}}; pointer-events: {{sumPe}}; transition: opacity 200ms ease">
+<sc-if value="{{isOv}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{ovCards}}" as="o" hint-placeholder-count="3">
+<button aria-label="{{o.aria}}" onClick="{{o.pick}}" style="width: 100%; display: flex; flex-direction: column; gap: 12px; padding: 14px; border: 0; border-radius: 16px; background: #10111B; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+<span style="display: flex; align-items: center; gap: 12px">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; line-height: 20px; font-weight: 600">{{o.title}}</span><span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{o.source}}</span></span>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(239,236,230,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M9 6l6 6-6 6"></path></svg>
+</span>
+<span style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="display: flex; align-items: baseline; gap: 4px"><span style="font-size: 24px; line-height: 30px; font-weight: 600; color: {{o.c1}}">{{o.v1}}</span><span style="font-size: 13px; font-weight: 300; color: rgba(239,236,230,0.7)">{{o.u1}}</span></span><span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{o.l1}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="display: flex; align-items: baseline; gap: 4px"><span style="font-size: 24px; line-height: 30px; font-weight: 600; color: {{o.c2}}">{{o.v2}}</span><span style="font-size: 13px; font-weight: 300; color: rgba(239,236,230,0.7)">{{o.u2}}</span></span><span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{o.l2}}</span></span>
+</span>
+<sc-if value="{{o.hasLine}}" hint-placeholder-val="{{ true }}"><span style="display: flex; align-items: center; gap: 8px; padding-top: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); font-size: 13px; line-height: 18px; font-weight: 400; color: rgba(239,236,230,0.85)"><span aria-hidden="true" style="display: block; flex: none; width: 6px; height: 6px; border-radius: 3px; background: #FF403C"></span>{{o.line}}</span></sc-if>
+</button>
+</sc-for>
+</sc-if>
+<sc-if value="{{notOv}}" hint-placeholder-val="{{ true }}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{sumTiles}}" as="t" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; background: #10111B; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)">
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{t.label}}</span>
+<span style="display: flex; align-items: baseline; gap: 4px"><span style="font-size: 28px; line-height: 34px; font-weight: 600; color: {{t.color}}">{{t.value}}</span><span style="font-size: 13px; font-weight: 300; color: rgba(239,236,230,0.7)">{{t.unit}}</span></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{t.note}}</span>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{hasAttn}}" hint-placeholder-val="{{ true }}">
+<h3 style="margin: 4px 0 0; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(239,236,230,0.7)">Needs attention</h3>
+<div style="display: flex; flex-direction: column; margin-top: -4px">
+<sc-for list="{{sumAttn}}" as="x" hint-placeholder-count="4">
+<sc-if value="{{x.isHead}}" hint-placeholder-val="{{ false }}"><span style="display: block; padding: 14px 0 2px; font-size: 13px; line-height: 18px; font-weight: 600; color: rgba(239,236,230,0.85)">{{x.name}}</span></sc-if>
+<sc-if value="{{x.tap}}" hint-placeholder-val="{{ true }}"><button aria-label="{{x.aria}}" onClick="{{x.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 0; border: 0; background: transparent; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14); color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600">{{x.name}}<sc-if value="{{x.flag}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display: block; flex: none; width: 6px; height: 6px; border-radius: 3px; background: #FF403C"></span></sc-if></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{x.sub}}</span>
+</span>
+<sc-if value="{{x.hasBar}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: block; width: 64px; height: 4px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{x.bar}}%; border-radius: 2px; background: {{x.barColor}}"></span></span></sc-if>
+<sc-if value="{{x.hasValue}}" hint-placeholder-val="{{ true }}"><span style="flex: none; min-width: 28px; text-align: right; font-size: 15px; line-height: 20px; font-weight: 600; color: {{x.valueColor}}">{{x.value}}</span></sc-if>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(239,236,230,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M9 6l6 6-6 6"></path></svg>
+</button></sc-if>
+<sc-if value="{{x.still}}" hint-placeholder-val="{{ false }}"><div style="min-height: 60px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 8px 0; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14)">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600">{{x.name}}<sc-if value="{{x.flag}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display: block; flex: none; width: 6px; height: 6px; border-radius: 3px; background: #FF403C"></span></sc-if></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{x.sub}}</span>
+</span>
+<sc-if value="{{x.hasBar}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: block; width: 64px; height: 4px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{x.bar}}%; border-radius: 2px; background: {{x.barColor}}"></span></span></sc-if>
+<sc-if value="{{x.hasValue}}" hint-placeholder-val="{{ true }}"><span style="flex: none; min-width: 28px; text-align: right; font-size: 15px; line-height: 20px; font-weight: 600; color: {{x.valueColor}}">{{x.value}}</span></sc-if>
+</div></sc-if>
+</sc-for>
+</div>
+</sc-if>
+<h3 style="margin: 4px 0 0; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(239,236,230,0.7)">{{lowerTitle}}</h3>
+<div style="display: flex; flex-direction: column; margin-top: -4px">
+<sc-for list="{{lower}}" as="y" hint-placeholder-count="4">
+<sc-if value="{{y.isHead}}" hint-placeholder-val="{{ false }}"><span style="display: block; padding: 14px 0 2px; font-size: 13px; line-height: 18px; font-weight: 600; color: rgba(239,236,230,0.85)">{{y.name}}</span></sc-if>
+<sc-if value="{{y.tap}}" hint-placeholder-val="{{ true }}"><button aria-label="{{y.aria}}" onClick="{{y.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 0; border: 0; background: transparent; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14); color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600">{{y.name}}<sc-if value="{{y.flag}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display: block; flex: none; width: 6px; height: 6px; border-radius: 3px; background: #FF403C"></span></sc-if></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{y.sub}}</span>
+</span>
+<sc-if value="{{y.hasBar}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: block; width: 64px; height: 4px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{y.bar}}%; border-radius: 2px; background: {{y.barColor}}"></span></span></sc-if>
+<sc-if value="{{y.hasValue}}" hint-placeholder-val="{{ true }}"><span style="flex: none; min-width: 28px; text-align: right; font-size: 15px; line-height: 20px; font-weight: 600; color: {{y.valueColor}}">{{y.value}}</span></sc-if>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(239,236,230,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M9 6l6 6-6 6"></path></svg>
+</button></sc-if>
+<sc-if value="{{y.still}}" hint-placeholder-val="{{ false }}"><div style="min-height: 60px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 8px 0; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14)">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600">{{y.name}}<sc-if value="{{y.flag}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display: block; flex: none; width: 6px; height: 6px; border-radius: 3px; background: #FF403C"></span></sc-if></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{y.sub}}</span>
+</span>
+<sc-if value="{{y.hasBar}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: block; width: 64px; height: 4px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{y.bar}}%; border-radius: 2px; background: {{y.barColor}}"></span></span></sc-if>
+<sc-if value="{{y.hasValue}}" hint-placeholder-val="{{ true }}"><span style="flex: none; min-width: 28px; text-align: right; font-size: 15px; line-height: 20px; font-weight: 600; color: {{y.valueColor}}">{{y.value}}</span></sc-if>
+</div></sc-if>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{hasDet}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; min-height: 0; display: flex; flex-direction: column">
+<div style="display: flex; align-items: flex-start; gap: 12px; padding: 0 17px 0 20px">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding-top: 2px">
+<div style="display: flex; align-items: center; gap: 10px">
+<span style="display: block; flex: none; width: 10px; height: 10px; border-radius: 3px; background: #CDFF20"></span>
+<h2 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 600">{{det.name}}</h2>
+</div>
+<p style="margin: 0 0 0 20px; font-size: 13px; line-height: 18px; font-weight: 300; color: rgba(239,236,230,0.7)">{{det.stat}}</p>
+</div>
+<button aria-label="{{clearLabel}}" onClick="{{clear}}" style="flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0">
+<span style="width: 38px; height: 38px; border-radius: 19px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1px 0 rgba(255,255,255,0.22); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
+</button>
+</div>
+<sc-if value="{{hasSubTests}}" hint-placeholder-val="{{ false }}">
+<div role="tablist" aria-label="{{subTestsLabel}}" style="flex: none; display: flex; gap: 6px; margin: 6px 20px 0; overflow-x: auto; scrollbar-width: none">
+<sc-for list="{{subTests}}" as="t" hint-placeholder-count="4">
+<button role="tab" aria-selected="{{t.selected}}" onClick="{{t.pick}}" style="flex: 1 0 auto; height: 44px; padding: 5px 0; border: 0; background: transparent; color: {{t.color}}; font: inherit; font-size: 13px; font-weight: {{t.weight}}; white-space: nowrap; cursor: pointer"><span style="height: 34px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 17px; background: {{t.bg}}; box-shadow: inset 0 0 0 1px {{t.ring}}">{{t.label}}</span></button>
+</sc-for>
+</div>
+</sc-if>
+<div style="flex: 1; min-height: 0; overflow-y: auto; box-sizing: border-box; padding: 16px 20px {{sheetPadB}}px; display: flex; flex-direction: column; gap: 12px; scrollbar-width: none">
+
+<sc-if value="{{showAssessData}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; background: #10111B; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)">
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">Strength score</span>
+<span style="display: flex; align-items: baseline; gap: 4px"><span style="font-size: 28px; line-height: 34px; font-weight: 600">{{info.strength}}</span><span style="font-size: 13px; font-weight: 300; color: rgba(239,236,230,0.7)">/ 100</span></span>
+<span style="display: flex; align-items: flex-start; gap: 4px; font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64E0FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; margin-top: 1px"><path d="M12 19V5M6 11l6-6 6 6"></path></svg>{{info.delta}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; background: #10111B; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)">
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">Strength asymmetry</span>
+<span style="display: flex; align-items: baseline; gap: 2px"><span style="font-size: 28px; line-height: 34px; font-weight: 600">{{info.asym}}</span><span style="font-size: 13px; font-weight: 300; color: rgba(239,236,230,0.7)">%</span></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: {{info.asymWeight}}; color: {{info.asymColor}}">{{info.asymNote}}</span>
+<sc-if value="{{info.cmp}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; line-height: 16px; font-weight: 300; color: {{info.asymWasColor}}">{{info.asymWas}}</span></sc-if>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; background: #10111B; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)">
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">Force · Right</span>
+<span style="display: flex; align-items: baseline; gap: 4px"><span style="font-size: 28px; line-height: 34px; font-weight: 600">{{info.fR}}</span><span style="font-size: 13px; font-weight: 300; color: rgba(239,236,230,0.7)">N</span></span>
+<span style="display: block; height: 4px; margin-top: 6px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{info.barR}}%; border-radius: 2px; background: rgba(239,236,230,0.85)"></span></span>
+<sc-if value="{{info.cmp}}" hint-placeholder-val="{{ false }}"><span style="margin-top: 4px; font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{info.wasR}}</span></sc-if>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; background: #10111B; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)">
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">Force · Left</span>
+<span style="display: flex; align-items: baseline; gap: 4px"><span style="font-size: 28px; line-height: 34px; font-weight: 600">{{info.fL}}</span><span style="font-size: 13px; font-weight: 300; color: rgba(239,236,230,0.7)">N</span></span>
+<span style="display: block; height: 4px; margin-top: 6px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{info.barL}}%; border-radius: 2px; background: rgba(239,236,230,0.85)"></span></span>
+<sc-if value="{{info.cmp}}" hint-placeholder-val="{{ false }}"><span style="margin-top: 4px; font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{info.wasL}}</span></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{showAssessEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 8px; padding: 0 8px 12px">
+<div style="width: 56px; height: 56px; border-radius: 28px; background: rgba(255,255,255,0.1); color: #64E0FF; display: flex; align-items: center; justify-content: center">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-3"></path><rect x="9" y="3" width="6" height="4" rx="1"></rect><path d="M9 12h6M9 16h4"></path></svg>
+</div>
+<h3 style="margin: 4px 0 0; font-size: 16px; line-height: 22px; font-weight: 600">No assessments yet</h3>
+<p style="margin: 0; max-width: 290px; font-size: 13px; line-height: 20px; font-weight: 300; color: rgba(239,236,230,0.7); text-wrap: pretty">Strength score, asymmetry and right and left force for the {{info.lower}} will show here once they're assessed.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{showBodyDet}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; margin-top: -4px">
+<sc-for list="{{bodyDet}}" as="z" hint-placeholder-count="4">
+<sc-if value="{{z.isHead}}" hint-placeholder-val="{{ false }}"><span style="display: block; padding: 14px 0 2px; font-size: 13px; line-height: 18px; font-weight: 600; color: rgba(239,236,230,0.85)">{{z.name}}</span></sc-if>
+<sc-if value="{{z.tap}}" hint-placeholder-val="{{ true }}"><button aria-label="{{z.aria}}" onClick="{{z.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 0; border: 0; background: transparent; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14); color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600">{{z.name}}<sc-if value="{{z.flag}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display: block; flex: none; width: 6px; height: 6px; border-radius: 3px; background: #FF403C"></span></sc-if></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{z.sub}}</span>
+</span>
+<sc-if value="{{z.hasBar}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: block; width: 64px; height: 4px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{z.bar}}%; border-radius: 2px; background: {{z.barColor}}"></span></span></sc-if>
+<sc-if value="{{z.hasValue}}" hint-placeholder-val="{{ true }}"><span style="flex: none; min-width: 28px; text-align: right; font-size: 15px; line-height: 20px; font-weight: 600; color: {{z.valueColor}}">{{z.value}}</span></sc-if>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(239,236,230,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M9 6l6 6-6 6"></path></svg>
+</button></sc-if>
+<sc-if value="{{z.still}}" hint-placeholder-val="{{ false }}"><div style="min-height: 60px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 8px 0; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14)">
+<span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600">{{z.name}}<sc-if value="{{z.flag}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display: block; flex: none; width: 6px; height: 6px; border-radius: 3px; background: #FF403C"></span></sc-if></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{z.sub}}</span>
+</span>
+<sc-if value="{{z.hasBar}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: block; width: 64px; height: 4px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{z.bar}}%; border-radius: 2px; background: {{z.barColor}}"></span></span></sc-if>
+<sc-if value="{{z.hasValue}}" hint-placeholder-val="{{ true }}"><span style="flex: none; min-width: 28px; text-align: right; font-size: 15px; line-height: 20px; font-weight: 600; color: {{z.valueColor}}">{{z.value}}</span></sc-if>
+</div></sc-if>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{showSegDet}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<sc-for list="{{segTiles}}" as="u" hint-placeholder-count="2">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 16px; background: #10111B; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12)">
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{u.label}}</span>
+<span style="display: flex; align-items: baseline; gap: 4px"><span style="font-size: 28px; line-height: 34px; font-weight: 600; color: {{u.color}}">{{u.value}}</span><span style="font-size: 13px; font-weight: 300; color: rgba(239,236,230,0.7)">{{u.unit}}</span></span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{u.note}}</span>
+</div>
+</sc-for>
+</div>
+<p style="margin: 4px 0 0; font-size: 13px; line-height: 20px; font-weight: 300; color: rgba(239,236,230,0.7); text-wrap: pretty">InBody compares the fat in each segment with the normal amount for the client's height and weight. 100% is normal.</p>
+</sc-if>
+
+</div>
+</div>
+</sc-if>
+</section>
+
+<sc-if value="{{menuOpen}}" hint-placeholder-val="{{ false }}">
+<button aria-label="Close menu" onClick="{{closeMenus}}" style="position: absolute; left: 0; top: 0; width: 412px; height: {{frameH}}px; border: 0; padding: 0; background: rgba(0,0,0,0.35); z-index: 4; cursor: default"></button>
+</sc-if>
+
+<sc-if value="{{scanOpen}}" hint-placeholder-val="{{ false }}">
+<div role="menu" aria-label="Scans" style="position: absolute; right: 16px; top: {{scanMenuTop}}px; width: 300px; box-sizing: border-box; padding: 8px; border-radius: 16px; background: #191B28; box-shadow: 0 16px 40px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.22); display: flex; flex-direction: column; gap: 2px; z-index: 5">
+<sc-if value="{{scanListView}}" hint-placeholder-val="{{ true }}">
+<div style="padding: 8px 12px 6px; font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(239,236,230,0.7)">Scan history</div>
+<sc-for list="{{scans}}" as="r" hint-placeholder-count="4">
+<button role="menuitemradio" aria-checked="{{r.checked}}" onClick="{{r.pick}}" style="height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 12px; background: {{r.bg}}; color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; line-height: 20px; font-weight: {{r.weight}}">{{r.date}}</span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{r.meta}}</span>
+</span>
+<sc-if value="{{r.checked}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+</button>
+</sc-for>
+<div style="height: 1px; margin: 6px 4px; background: rgba(255,255,255,0.18)"></div>
+<button role="menuitem" onClick="{{openCmpPick}}" style="height: 60px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+<span style="flex: none; width: 36px; height: 36px; border-radius: 18px; background: #005EFF; display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M12 2v20"></path></svg>
+</span>
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; line-height: 20px; font-weight: 600">{{cmpRowLabel}}</span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{cmpRowSub}}</span>
+</span>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(239,236,230,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+</button>
+</sc-if>
+<sc-if value="{{scanPickView}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 2px; padding: 0 4px 4px 0">
+<button aria-label="Back to scan history" onClick="{{scanBack}}" style="flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; padding: 0; background: transparent; color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>
+</button>
+<span style="font-size: 12px; line-height: 16px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(239,236,230,0.7)">Compare {{scanCurrent}} with</span>
+</div>
+<sc-for list="{{cmpScans}}" as="r" hint-placeholder-count="3">
+<button role="menuitemradio" aria-checked="{{r.checked}}" onClick="{{r.pick}}" style="height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border: 0; border-radius: 12px; background: {{r.bg}}; color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+<span style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 15px; line-height: 20px; font-weight: {{r.weight}}">{{r.date}}</span>
+<span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{r.meta}}</span>
+</span>
+<sc-if value="{{r.checked}}" hint-placeholder-val="{{ false }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+</button>
+</sc-for>
+<sc-if value="{{noCmpScans}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; padding: 8px 12px 12px; font-size: 13px; line-height: 20px; font-weight: 300; color: rgba(239,236,230,0.7)">This is the client's first scan, so there's nothing earlier to compare with.</p>
+</sc-if>
+</sc-if>
+</div>
+</sc-if>
+
+
+</div>
+</template>
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+<script src="dc-lite.js"></script>
+<script>
+// Model files are scripts that set window.__udraBin[path]; serve them to the loader's fetch().
+(function () {
+  var nativeFetch = window.fetch ? window.fetch.bind(window) : null;
+  window.__udraBin = {};
+  window.fetch = function (u, o) {
+    if (typeof u === 'string' && u.indexOf('model/') === 0) {
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = u;
+        s.onload = function () {
+          var v = window.__udraBin[u]; delete window.__udraBin[u]; s.remove();
+          if (typeof v !== 'string') return reject(new Error('Model file missing: ' + u));
+          resolve({ ok: true, status: 200, text: function () { return Promise.resolve('"' + v + '"'); } });
+        };
+        s.onerror = function () { reject(new Error('Could not load ' + u)); };
+        document.head.appendChild(s);
+      });
+    }
+    return nativeFetch ? nativeFetch(u, o) : Promise.reject(new Error('fetch unavailable'));
+  };
+})();
+</script>
+<script src="udra-posture.js"></script>
+<script src="udra-model.js"></script>
+<script>
+class Component extends DCLogic {
+  componentWillUnmount() {
+    (this._spin || []).forEach((t) => clearTimeout(t));
+    clearTimeout(this._wait);
+    if (this._ctl) { this._ctl.destroy(); this._ctl = null; }
+  }
+
+  componentDidMount() {
+    this.mountModel();
+  }
+
+  componentDidUpdate() {
+    if (!this._ctl) this.mountModel();
+    if (this._ctl && this._host) this._ctl.update(this._host);
+  }
+
+  // The live UDRA 3D model (thefitxperience/3D-Model) runs in the interactive prototype only; the fixed frames keep the flat map.
+  mountModel() {
+    if (this._ctl || !this._el || (this.props.preset && this.props.preset !== 'default')) return;
+    const api = window.UDRAModel;
+    if (!api) {
+      this._tries = (this._tries || 0) + 1;
+      if (this._tries < 120) this._wait = setTimeout(() => this.mountModel(), 150);
+      else this.setState({ merr: 'unavailable' });
+      return;
+    }
+    const B = '/_blob/';
+    const files = this.props.modelFiles || {
+      '/models/body-0.bin.gz': B + '6c51763ae7649faae91c7c0e8889ec3a',
+      '/models/body-1.bin.gz': B + '76ffb34f8ff5218406cd65e56c91ba9e',
+      '/models/body-2.bin.gz': B + '5be03956d203bcfa0d2ce7fba0f7ca3f',
+      '/models/body-3.bin.gz': B + 'a268c1582f83285521b643e28c7b643e',
+      '/models/body-4.bin.gz': B + '49bffcf13a0295c717a013bfcd49b52a',
+      '/models/body-5.bin.gz': B + '996b6bbcf7cb0aed9303189260571af1',
+      '/models/body-6.bin.gz': B + 'e07fdfc9125718b54cfb1302a6b44066',
+      '/models/body-7.bin.gz': B + '7af015bd537151bfa1b3ae5ce2431fbc',
+      '/models/body-8.bin.gz': B + '7632b10e8e40245cbec456beca68a0f5',
+      '/models/bone-ao.bin': B + '9aa64bbbfbe8ee41614f0e1f040c8c17',
+      '/models/rig-weights.bin.gz': B + '9be5f9d3678a303de296f4c65b9f1bc8'
+    };
+    this._ctl = api.mount(this._el, {
+      files: files,
+      onProgress: (n) => { if (n === 100 || n - (this._mp || 0) >= 5) { this._mp = n; this.setState({ mp: n }); } },
+      onReady: () => this.setState({ mready: true }),
+      onError: (m) => this.setState({ merr: m || 'error' }),
+      onSelect: (gid) => { if (this._onModelPick) this._onModelPick(gid); }
+    });
+    if (this._host) this._ctl.update(this._host);
+  }
+
+  // Bone matrices for the client's posture, solved once (udra-posture.js, the 3D-Model repo's solver).
+  postureMatrices(fields) {
+    if (this._pose === undefined) {
+      const values = {}; fields.forEach((f) => { values[f.key] = f.v; });
+      try { this._pose = window.UDRAPosture ? window.UDRAPosture.solve(values, 1) : null; } catch (e) { this._pose = null; }
+    }
+    return this._pose;
+  }
+
+  geo() {
+    if (this._geo) return this._geo;
+    const mir = (d) => d.replace(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g, (m, x, y) => (200 - parseFloat(x)) + ',' + y);
+    const E = (cx, cy, rx, ry) => 'M' + (cx - rx) + ',' + cy + ' a' + rx + ' ' + ry + ' 0 1 0 ' + (2 * rx) + ' 0 a' + rx + ' ' + ry + ' 0 1 0 ' + (-2 * rx) + ' 0 Z';
+    const one = (id, d) => [{ id: id, d: d }];
+    const two = (id, d) => [{ id: id, d: d }, { id: id, d: mir(d) }];
+
+    const NECK = 'M92,48 L108,48 L111,64 L89,64 Z';
+    const FOOT = 'M79,390 L93,390 L95,404 C90,409 80,409 76,404 Z';
+    const DELT = 'M74,66 C62,64 51,70 49,84 C48,94 49,102 51,108 C56,100 63,94 70,92 C73,84 75,74 74,66 Z';
+    const BICEP = 'M50,112 C54,104 61,98 69,97 C71,110 69,127 65,139 C58,141 52,140 48,136 C46,128 47,118 50,112 Z';
+    const FORE = 'M47,143 C52,147 59,147 64,145 C63,161 59,178 55,193 C51,195 47,195 43,193 C42,177 43,159 47,143 Z';
+    const PEC = 'M80,68 L98,71 L98,106 C90,110 82,108 77,100 C76,91 76,78 80,68 Z';
+    const ABS = 'M85,114 L115,114 L113,160 C108,168 92,168 87,160 Z';
+    const OBL = 'M75,108 C79,112 82,114 82,118 L84,162 C80,160 76,156 74,148 C72,136 72,122 75,108 Z';
+    const PELVIS = 'M80,172 C88,180 112,180 120,172 L124,188 C116,198 106,204 100,206 C94,204 84,198 76,188 Z';
+    const QUAD = 'M76,190 C82,200 92,208 97,214 C98,236 97,258 94,282 C88,287 80,287 76,283 C70,260 70,224 76,190 Z';
+    const CALF = 'M77,306 C82,302 92,302 95,306 C96,330 94,356 91,382 C87,386 83,386 80,382 C76,358 74,330 77,306 Z';
+
+    const TRAPS = 'M93,50 L107,50 L111,62 L120,68 L113,76 L100,110 L87,76 L80,68 L89,62 Z';
+    const UB = 'M77,72 L86,78 L97,112 L93,116 C86,113 81,106 78,98 C76,90 76,80 77,72 Z';
+    const LAT = 'M74,106 C80,114 88,120 97,124 L97,150 C92,158 86,163 80,167 C76,152 73,130 74,106 Z';
+    const LOW = 'M86,167 C92,161 96,159 100,159 C104,159 108,161 114,167 L118,180 L82,180 Z';
+    const GLUTE = 'M80,184 C87,180 95,181 99,184 L99,214 C92,220 83,218 77,210 C74,200 75,190 80,184 Z';
+    const HAM = 'M77,216 C84,222 93,224 98,222 C99,242 97,264 94,284 C88,288 80,288 76,284 C71,262 71,238 77,216 Z';
+    const BCALF = 'M76,306 C82,300 93,300 96,306 C98,324 96,346 91,376 C87,382 83,382 80,376 C74,348 72,324 76,306 Z';
+
+    const shared = [].concat(
+      one(null, E(100, 30, 16, 20)), one(null, E(49, 207, 7, 12)), one(null, E(151, 207, 7, 12)),
+      one(null, E(86, 295, 9, 6)), one(null, E(114, 295, 9, 6)), two(null, FOOT),
+      two('shoulders', DELT), two('arms', BICEP), two('arms', FORE)
+    );
+    const front = [].concat(shared, one(null, NECK), one(null, PELVIS), two('chest', PEC), one('core', ABS), two('core', OBL), two('quads', QUAD), two('calves', CALF));
+    const back = [].concat(shared, one(null, LOW), one('traps', TRAPS), two('upperback', UB), two('lats', LAT), two('glutes', GLUTE), two('hamstrings', HAM), two('calves', BCALF));
+    const side = [].concat(
+      one(null, E(104, 30, 15, 20)), one(null, 'M96,48 L110,48 L111,64 L94,64 Z'), one(null, E(102, 207, 6, 11)),
+      one(null, E(99, 295, 8, 6)), one(null, 'M92,386 L104,386 L122,398 L122,405 L90,405 Z'),
+      one(null, 'M102,306 L108,306 C107,330 105,356 102,380 L100,380 C101,352 103,330 102,306 Z'),
+      one('upperback', 'M84,70 C78,78 76,90 78,102 L84,104 C83,92 84,80 86,72 Z'),
+      one('lats', 'M78,106 C78,122 82,140 88,154 L92,152 C90,136 89,120 89,106 Z'),
+      one('glutes', 'M80,162 C74,172 72,188 78,200 C84,205 90,204 93,197 L93,164 Z'),
+      one('hamstrings', 'M80,206 C87,210 94,210 97,206 L97,286 L90,286 C84,264 78,234 80,206 Z'),
+      one('quads', 'M101,202 C111,200 119,208 117,232 C115,258 111,276 107,286 L100,286 L100,206 Z'),
+      one('calves', 'M88,306 C84,324 86,352 92,380 L98,380 C98,352 100,326 99,306 Z'),
+      one('core', 'M112,112 C120,118 124,140 120,164 C116,172 111,174 108,170 C110,150 111,130 111,116 Z'),
+      one('chest', 'M118,74 C126,78 129,90 127,104 C123,110 117,110 114,107 C118,96 119,84 118,74 Z'),
+      one('shoulders', 'M90,68 C100,64 112,68 114,78 C116,90 110,100 102,104 C94,100 88,90 88,80 Z'),
+      one('arms', 'M98,108 C104,106 109,110 109,118 L107,140 C106,160 106,176 107,192 C104,196 100,196 98,192 L96,140 Z')
+    );
+    this._geo = { front: front, back: back, side: side };
+    return this._geo;
+  }
+
+  renderVals() {
+    const g = this.geo();
+    const LINEN = 'rgba(239,236,230,0.7)';
+    const BASE = {
+      rot: 0, rotT: 'none',
+      view: 'front', sel: null, snap: 'peek', section: 'overview', scanOpen: false, moreOpen: false, recentered: false, scan: 0,
+    };
+    const PRESETS = {
+      default: {},
+      home: {},
+      chest: { sel: 'push', snap: 'half', view: 'front' },
+      lats: { sel: 'pull', snap: 'half', view: 'back' },
+      traps: { sel: 'grip', snap: 'half', view: 'front' },
+      scans: { scanOpen: true },
+      comparePick: { scanOpen: true, scanView: 'pick' },
+      compare: { sel: 'push', snap: 'half', view: 'front', cmp: 1 }
+    };
+    const s = Object.assign({}, BASE, PRESETS[this.props.preset] || {}, this.state || {});
+    const set = (o) => this.setState(Object.assign({}, s, o));
+
+    const REG = {
+      push: { name: 'Chest', strength: 78, delta: '+6 since 12 Jul 2026', fR: 274, fL: 240, last: '8 Sep 2026' },
+      // The 16 VALD tests of the UDRA 3D model (thefitxperience/3D-Model, app/results.ts). Force from its demo data, in N.
+      pull: { name: 'Back', strength: 71, delta: '+4 since 12 Jul 2026', fR: 295, fL: 302, last: '8 Sep 2026' },
+      'shoulder-flexion': { name: 'Shoulder flexion', strength: 73, delta: '+2 since 12 Jul 2026', fR: 127, fL: 131, last: '8 Sep 2026' },
+      'shoulder-abduction': { name: 'Shoulder abduction', strength: 74, delta: '+2 since 12 Jul 2026', fR: 161, fL: 141, last: '8 Sep 2026' },
+      'shoulder-ir': { name: 'Shoulder IR', strength: 70, delta: '+1 since 12 Jul 2026', fR: 112, fL: 118, last: '8 Sep 2026' },
+      'shoulder-er': { name: 'Shoulder ER', strength: 66, delta: '+3 since 12 Jul 2026', fR: 93, fL: 96, last: '8 Sep 2026' },
+      'elbow-flexion': { name: 'Biceps', strength: 76, delta: '+3 since 12 Jul 2026', fR: 170, fL: 176, last: '8 Sep 2026' },
+      'elbow-extension': { name: 'Triceps', strength: 75, delta: '+2 since 12 Jul 2026', fR: 147, fL: 151, last: '8 Sep 2026' },
+      grip: { name: 'Grip' },
+      'trunk-lateral-flexion': { name: 'Trunk', strength: 69, delta: '+2 since 12 Jul 2026', fR: 204, fL: 210, last: '8 Sep 2026' },
+      'hip-flexion': { name: 'Hip flexors', strength: 72, delta: '+1 since 12 Jul 2026', fR: 181, fL: 188, last: '8 Sep 2026' },
+      'hip-extension': { name: 'Hip extensors', strength: 80, delta: '+4 since 12 Jul 2026', fR: 331, fL: 350, last: '8 Sep 2026' },
+      'hip-abduction': { name: 'Hip abductors', strength: 77, delta: '+2 since 12 Jul 2026', fR: 206, fL: 214, last: '8 Sep 2026' },
+      'hip-adduction': { name: 'Hip adductors', strength: 68, delta: '−1 since 12 Jul 2026', fR: 289, fL: 236, last: '8 Sep 2026' },
+      'knee-extension': { name: 'Quadriceps', strength: 82, delta: '+5 since 12 Jul 2026', fR: 398, fL: 412, last: '8 Sep 2026' },
+      'knee-flexion': { name: 'Hamstrings', strength: 64, delta: '+1 since 12 Jul 2026', fR: 262, fL: 305, last: '8 Sep 2026' }
+    };
+    // Region keys are the model's VALD group ids, so the live model and the sheet speak the same language.
+    const live = !this.props.preset || this.props.preset === 'default';
+    const liveReady = live && !!s.mready && !s.merr;
+    // Chips are body areas; areas with several VALD tests (Shoulder, Hip) show their tests as a second row once selected.
+    const AREAS = [
+      { id: 'chest', name: 'Chest', tests: ['push'] },
+      { id: 'back', name: 'Back', tests: ['pull'] },
+      { id: 'shoulder', name: 'Shoulder', tests: ['shoulder-flexion', 'shoulder-abduction', 'shoulder-ir', 'shoulder-er'] },
+      { id: 'biceps', name: 'Biceps', tests: ['elbow-flexion'] },
+      { id: 'triceps', name: 'Triceps', tests: ['elbow-extension'] },
+      { id: 'grip', name: 'Grip', tests: ['grip'] },
+      { id: 'trunk', name: 'Trunk', tests: ['trunk-lateral-flexion'] },
+      { id: 'hip', name: 'Hip', tests: ['hip-flexion', 'hip-extension', 'hip-abduction', 'hip-adduction'] },
+      { id: 'quads', name: 'Quadriceps', tests: ['knee-extension'] },
+      { id: 'hamstrings', name: 'Hamstrings', tests: ['knee-flexion'] }
+    ];
+    const SHORT = {
+      'shoulder-flexion': 'Flexion', 'shoulder-abduction': 'Abduction', 'shoulder-ir': 'IR', 'shoulder-er': 'ER',
+      'hip-flexion': 'Flexion', 'hip-extension': 'Extension', 'hip-abduction': 'Abduction', 'hip-adduction': 'Adduction'
+    };
+    const AREA_OF = {};
+    AREAS.forEach((a) => a.tests.forEach((t) => { AREA_OF[t] = a; }));
+    const asymOf = (t) => { const x = REG[t]; return x && x.fR ? Math.abs(x.fR - x.fL) / Math.max(x.fR, x.fL) : -1; };
+    // Opening an area lands on its most uneven test, so the issue shows first.
+    const firstTest = (a) => a.tests.slice().sort((p, q) => asymOf(q) - asymOf(p))[0];
+    const ORDER = ['push', 'pull', 'shoulder-flexion', 'shoulder-abduction', 'shoulder-ir', 'shoulder-er', 'elbow-flexion', 'elbow-extension', 'grip', 'trunk-lateral-flexion', 'hip-flexion', 'hip-extension', 'hip-abduction', 'hip-adduction', 'knee-extension', 'knee-flexion'];
+    const BACK_ONLY = { pull: 1, 'shoulder-er': 1, 'elbow-extension': 1, 'hip-extension': 1, 'hip-abduction': 1, 'knee-flexion': 1 };
+    const FRONT_ONLY = { push: 1, 'shoulder-flexion': 1, 'elbow-flexion': 1, grip: 1, 'trunk-lateral-flexion': 1, 'hip-flexion': 1, 'hip-adduction': 1, 'knee-extension': 1 };
+    // Flat placeholder map (fixed frames and while the 3D model loads): which drawn shapes each test lights up.
+    const SHAPES_OF = {
+      push: ['chest'], pull: ['traps', 'upperback', 'lats'], 'shoulder-flexion': ['shoulders'], 'shoulder-abduction': ['shoulders'],
+      'shoulder-ir': ['shoulders'], 'shoulder-er': ['shoulders'], 'elbow-flexion': ['arms'], 'elbow-extension': ['arms'], grip: ['arms'],
+      'trunk-lateral-flexion': ['core'], 'hip-flexion': ['core'], 'hip-extension': ['glutes'], 'hip-abduction': ['glutes'],
+      'hip-adduction': ['quads'], 'knee-extension': ['quads'], 'knee-flexion': ['hamstrings']
+    };
+    const SHAPE_PICK = { chest: 'push', traps: 'pull', upperback: 'pull', lats: 'pull', shoulders: 'shoulder-abduction', arms: 'elbow-flexion', core: 'trunk-lateral-flexion', glutes: 'hip-extension', quads: 'knee-extension', hamstrings: 'knee-flexion' };
+    const FOCUS = {
+      push: { cy: 88, w: 56, h: 50, sx: 122 }, pull: { cy: 108, w: 60, h: 120, sx: 84 },
+      'shoulder-flexion': { cy: 86, w: 108, h: 50, sx: 101 }, 'shoulder-abduction': { cy: 86, w: 108, h: 50, sx: 101 },
+      'shoulder-ir': { cy: 86, w: 108, h: 50, sx: 101 }, 'shoulder-er': { cy: 86, w: 108, h: 50, sx: 101 },
+      'elbow-flexion': { cy: 120, w: 120, h: 50, sx: 102 }, 'elbow-extension': { cy: 120, w: 120, h: 50, sx: 102 }, grip: { cy: 170, w: 124, h: 56, sx: 102 },
+      'trunk-lateral-flexion': { cy: 138, w: 58, h: 62, sx: 115 }, 'hip-flexion': { cy: 150, w: 58, h: 70, sx: 115 },
+      'hip-extension': { cy: 200, w: 58, h: 42, sx: 85 }, 'hip-abduction': { cy: 200, w: 58, h: 42, sx: 85 },
+      'hip-adduction': { cy: 238, w: 62, h: 102, sx: 109 }, 'knee-extension': { cy: 238, w: 62, h: 102, sx: 109 }, 'knee-flexion': { cy: 252, w: 62, h: 76, sx: 89 }
+    };
+
+    // view changes spin the model: turn edge-on, swap the drawing, turn back in
+    const VIEW_IDX = { front: 0, side: 1, back: 2 };
+    const go = (o, forceDir) => {
+      const nv = o.view;
+      if (!nv || nv === s.view || liveReady) { set(o); return; }
+      const rest = Object.assign({}, o);
+      delete rest.view;
+      const dir = forceDir || (VIEW_IDX[nv] > VIEW_IDX[s.view] ? 1 : -1);
+      (this._spin || []).forEach((t) => clearTimeout(t));
+      set(Object.assign(rest, { rot: 90 * dir, rotT: 'out' }));
+      this._spin = [
+        setTimeout(() => this.setState({ view: nv, rot: -90 * dir, rotT: 'none' }), 240),
+        setTimeout(() => this.setState({ rot: 0, rotT: 'in' }), 290)
+      ];
+    };
+    const ROT_TRANS = {
+      out: 'transform 240ms cubic-bezier(.55,0,.9,.55), opacity 240ms ease',
+      in: 'transform 380ms cubic-bezier(.15,.65,.3,1), opacity 300ms ease',
+      none: 'none'
+    };
+    const turning = s.rot !== 0;
+
+    const pick = (id) => {
+      if (id === s.sel && !s.recentered) return;
+      let view = s.view;
+      if (BACK_ONLY[id]) view = 'back';
+      if (FRONT_ONLY[id]) view = 'front';
+      go({ sel: id, view: view, isoView: null, snap: s.snap === 'peek' ? 'half' : s.snap, recentered: false, scanOpen: false, moreOpen: false });
+    };
+    // Tapping a muscle on the model only counts where muscles are shown (Overview, U-Muscle).
+    this._onModelPick = (gid) => { if (gid && REG[gid] && (s.section === 'overview' || s.section === 'muscle')) pick(gid); };
+
+    const SCANS = [['8 Sep 2026', '84.5 kg'], ['12 Jul 2026', '85.9 kg'], ['3 May 2026', '87.2 kg'], ['14 Feb 2026', '88.4 kg']];
+    // U-Body: Bodydot posture. Fields, labels and normal ranges are the 3D-Model repo's POSTURE_FIELDS (app/posture.ts);
+    // values are its first DEMO_POSTURES session (a real, anonymised client). [key, Bodydot label, unit, normal low, high,
+    // value, wording for a negative / positive value]. Directions as confirmed there: frontal angles negative = left side
+    // higher, HKA negative = knee outward, Kendall angles positive = forward. Coronal balance's direction is unconfirmed.
+    const LR = ['Left side higher', 'Right side higher'], HKA = ['Knee outward', 'Knee inward'];
+    const POSTURE = [
+      ['headTilt', 'Head Horizontal Angle', '°', -5, 5, -2.1, LR],
+      ['shoulderSlopeL', 'Left Shoulder Slope', '°', 12, 18, 17.6],
+      ['shoulderSlopeR', 'Right Shoulder Slope', '°', 12, 18, 23.1],
+      ['hipHike', 'Pelvic Tilt', '°', -2, 2, -0.9, LR],
+      ['kneeL', 'Left HKA Angle', '°', -3, 3, -1.6, HKA],
+      ['kneeR', 'Right HKA Angle', '°', -3, 3, -1.2, HKA],
+      ['sideShift', 'Coronal Balance', 'cm', -5, 5, 0.6],
+      ['forwardHead', 'Forward Head Posture Angle', '°', 0, 30, 34.5],
+      ['roundShoulderL', 'Rounded Shoulder Angle (L)', '°', 0, 42, 33.6],
+      ['roundShoulderR', 'Rounded Shoulder Angle (R)', '°', 0, 42, 48.6],
+      ['kyphosis', 'Thoracic Kyphosis Angle', '°', 35, 45, 41.9],
+      ['lordosis', 'Lumbar Lordosis Angle', '°', 45, 55, 50.5],
+      ['pelvicTilt', 'Anterior Pelvic Tilt Angle', '°', 5, 8, 6.4],
+      ['trunkLean', 'Kendall Shoulder Angle', '°', -5, 5, 0.1, ['Shoulder behind hip', 'Shoulder forward of hip']],
+      ['hipForwardL', 'Kendall Hip Angle (L)', '°', -5, 5, 4.3, ['Hip behind knee', 'Hip forward of knee']],
+      ['hipForwardR', 'Kendall Hip Angle (R)', '°', -5, 5, 5.1, ['Hip behind knee', 'Hip forward of knee']],
+      ['kneeForwardL', 'Kendall Knee Angle (L)', '°', -5, 5, 7.2, ['Knee behind ankle', 'Knee forward of ankle']],
+      ['kneeForwardR', 'Kendall Knee Angle (R)', '°', -5, 5, 7.2, ['Knee behind ankle', 'Knee forward of ankle']]
+    ].map((f) => ({ key: f[0], label: f[1], unit: f[2], lo: f[3], hi: f[4], v: f[5], dir: f[6] || null }));
+    const PF = {}; POSTURE.forEach((f) => { PF[f.key] = f; });
+    const POSTURE_AREAS = [
+      { id: 'head', name: 'Head & neck', keys: ['headTilt', 'forwardHead'] },
+      { id: 'shoulders', name: 'Shoulders', keys: ['shoulderSlopeL', 'shoulderSlopeR', 'roundShoulderL', 'roundShoulderR'] },
+      { id: 'spine', name: 'Spine', keys: ['kyphosis', 'lordosis', 'trunkLean', 'sideShift'] },
+      { id: 'pelvis', name: 'Pelvis & hips', keys: ['hipHike', 'pelvicTilt', 'hipForwardL', 'hipForwardR'] },
+      { id: 'knees', name: 'Knees', keys: ['kneeL', 'kneeR', 'kneeForwardL', 'kneeForwardR'] }
+    ];
+    const PA = {}; POSTURE_AREAS.forEach((a) => { PA[a.id] = a; });
+    const outBy = (f) => (f.v < f.lo ? f.lo - f.v : f.v > f.hi ? f.v - f.hi : 0);
+
+    // U-Nutrition: InBody. Segmental fat is the 3D-Model repo's InBodyResult (fat in that segment as a percent of normal,
+    // 100 = normal) with its DEMO_INBODY values. Whole-body numbers are placeholder demo values.
+    // Status bands follow that repo's fat colour ramp (100 normal, 125 the warning point).
+    const INBODY = { pbf: 24.8, fatKg: 21.0, smm: 36.2 };
+    const SEGMENTS = [
+      { id: 'trunk', name: 'Trunk', v: 162 },
+      { id: 'right-arm', name: 'Right arm', v: 104, pair: 'left-arm' }, { id: 'left-arm', name: 'Left arm', v: 110, pair: 'right-arm' },
+      { id: 'right-leg', name: 'Right leg', v: 121, pair: 'left-leg' }, { id: 'left-leg', name: 'Left leg', v: 116, pair: 'right-leg' }
+    ];
+    const SEG = {}; SEGMENTS.forEach((g) => { SEG[g.id] = g; });
+    const segStatus = (v) => (v >= 125 ? 'Above normal' : v >= 110 ? 'Slightly above normal' : v >= 90 ? 'Normal' : 'Below normal');
+
+    // Programs: the rules from the VALD-automator repo (thefitxperience/VALD-automator), ported as-is.
+    // U-Muscle (web/backend/program_builder.py): each tested movement prescribes its exercises; the asymmetry band sets
+    // the right and left sets × reps, with the extra volume on the weaker side. Grouped like the VALD program sheet.
+    const VALD_EX = {
+      'shoulder-flexion': ['Front raise', 'Front press'],
+      'shoulder-abduction': ['Lateral raise 90 degree', 'Lateral raise cable', 'Lateral raise'],
+      'shoulder-ir': ['Internal rotation'], 'shoulder-er': ['External rotation'],
+      push: ['Chest press DB', 'Chest press cable', 'Chest flies DB', 'Chest flies cable'],
+      pull: ['Rowing back DB', 'Rowing back cable', 'Rowing back machine single hand', 'Reverse flies cable'],
+      'elbow-extension': ['Triceps overhead press DB', 'Triceps single hand cable', 'Triceps French press DB', 'Triceps kick back DB'],
+      'elbow-flexion': ['Concentration biceps curl', 'Single hand biceps cable', 'Preacher curls single hand'],
+      grip: ['Grip squeeze', 'Wrist curls', 'Reverse wrist curls'],
+      'knee-extension': ['Step up', 'Single leg press', 'Single leg extension', 'Single leg squat'],
+      'knee-flexion': ['Hamstring curl seated', 'Hamstring curl lying', 'Hamstring curl cable', 'Single leg deadlift'],
+      'hip-adduction': ['Inner cable machine', 'Side lying leg adduction'],
+      'hip-abduction': ['Outer cables machine', 'Side-lying leg lift elastic'],
+      'hip-flexion': ['Cable kick forward', 'Single leg banded high knee'],
+      'hip-extension': ['Single leg glute bridge', 'Cable kick back'],
+      'trunk-lateral-flexion': ['Cable twist', 'Side on lower back machine']
+    };
+    const VALD_SECTIONS = [['Shoulder', ['shoulder-flexion', 'shoulder-abduction', 'shoulder-ir', 'shoulder-er', 'push', 'pull']],
+      ['Elbow', ['elbow-extension', 'elbow-flexion']], ['Hand', ['grip']], ['Knee', ['knee-extension', 'knee-flexion']],
+      ['Hip', ['hip-adduction', 'hip-abduction', 'hip-flexion', 'hip-extension']], ['Trunk', ['trunk-lateral-flexion']]];
+    // [weaker side sets, reps, stronger side sets, reps] per band: Weakness 8–14.9%, Problem 15–19.9%,
+    // Major problem 20–29.9%, Risk of injury 30%+; below 8% both sides get 2 × 15.
+    const valdDose = (pct) => (pct >= 30 ? [4, 15, 2, 10] : pct >= 20 ? [3, 15, 2, 10] : pct >= 15 ? [3, 15, 2, 15] : pct >= 8 ? [2, 15, 2, 10] : [2, 15, 2, 15]);
+    // U-Body (web/frontend/src/bodydot/program.html, generateDynamicExercises): each value is graded against its range
+    // as normal, middle (within 10% of the abnormal span around a normal boundary) or abnormal, giving 2, 3 or 4 sets.
+    // 'rr' = abnormal on both sides [min, normal low, normal high, max]; 'br' = abnormal above [normal start, end, max].
+    const BD_RANGE = { slope: ['rr', [-5, 12, 18, 30]], pelvicTilt: ['rr', [-10, -2, 2, 10]], hka: ['rr', [-10, -3, 3, 10]],
+      kyphosis: ['rr', [20, 35, 45, 60]], lordosis: ['rr', [30, 45, 55, 70]], kendallKnee: ['rr', [-30, -5, 5, 30]],
+      forwardHead: ['br', [0, 30, 70]], roundShoulder: ['br', [0, 42, 70]] };
+
+    // U-Body areas and U-Nutrition segments open their own details; a header tab change keeps a muscle only where
+    // muscles are shown.
+    const half = () => (s.snap === 'peek' ? 'half' : s.snap);
+    const pickBody = (id) => set({ bsel: id, sel: null, nsel: null, snap: half(), scanOpen: false, moreOpen: false });
+    const pickSeg = (id) => set({ nsel: id, sel: null, bsel: null, snap: half(), scanOpen: false, moreOpen: false });
+    const toSection = (k) => set({ section: k, bsel: null, nsel: null, sel: k === 'overview' || k === 'muscle' ? s.sel : null, recentered: false, scanOpen: false, moreOpen: false });
+
+    // geometry of the frame
+    // Frame height: 915 on the canvas; the standalone phone page passes the real screen height,
+    // plus the status-bar (safeTop) and home-indicator (safeBottom) insets so the header and sheet run edge to edge.
+    // The header's top row and the sheet's own bottom padding already leave some room, so only the rest is added.
+    const ST = Math.max(0, Math.round((this.props.safeTop || 0) - 8)), SB = Math.max(0, Math.round((this.props.safeBottom || 0) - 12));
+    const FH = Math.max(640, this.props.frameH || 915), VT = 124 + ST, ML = 76, MT = 14, K = 1.3;
+    // Half height fits the Assessment content exactly (measured): 304 px base, +16 when the asymmetry note is
+    // flagged (it wraps to two lines), +50 for the Shoulder/Hip test row, +44 for the comparison "was" lines.
+    const selArea = s.sel ? AREA_OF[s.sel] : null;
+    const selR = s.sel && REG[s.sel];
+    const selFlag = !!(selR && selR.strength && Math.abs(selR.fR - selR.fL) / Math.max(selR.fR, selR.fL) >= 0.1);
+    const cmpShown = typeof s.cmp === 'number' && s.cmp > s.scan && s.cmp < 4 && !!(selR && selR.strength);
+    // A U-Body area: header plus one 60 px row per measurement. A U-Nutrition segment: header, two cards and a note
+    // (an arm or leg's second card compares it with the other side, which takes an extra line).
+    // With nothing selected it shows the overview: the two summary cards and the first rows of Needs attention,
+    // the last one cut off so the list reads as scrollable.
+    const halfH = s.bsel && PA[s.bsel] ? 90 + PA[s.bsel].keys.length * 60 : s.nsel && SEG[s.nsel] ? (SEG[s.nsel].pair ? 288 : 272) : !s.sel ? 410 : 304 + (selFlag ? 16 : 0) + (selArea && selArea.tests.length > 1 ? 50 : 0) + (cmpShown ? 44 : 0);
+    // Bottom gap under the sheet content: clears the home indicator, 12 px at least.
+    // Peek fits its content (handle 30 + title 38 + chips 46 = 114).
+    const PB = Math.max(12, SB);
+    const SH = { peek: 114 + PB, half: halfH + PB, full: FH - VT };
+    const sheetH = SH[s.snap];
+    const zoomed = !!s.sel && !s.recentered;
+    let tx = 0, ty = 0, sc = 1;
+    if (zoomed && FOCUS[s.sel]) {
+      const f = FOCUS[s.sel];
+      const cx = s.view === 'side' ? f.sx : 100;
+      const avail = FH - SH[s.snap === 'full' ? 'half' : s.snap] - VT;
+      const top = 12, bottom = avail - 16;
+      sc = Math.max(1, Math.min(2.6, (bottom - top) / (f.h * K * 1.35), 380 / (f.w * K * 1.35)));
+      tx = 206 - ML - sc * cx * K;
+      ty = (top + bottom) / 2 - MT - sc * f.cy * K;
+    }
+
+    // rotate: drag sideways on the model (real product: free 3D orbit), or the one-tap Front/Back button
+    const RING = ['front', 'side', 'back'];
+    const VIEW_NAMES = { front: 'Front', side: 'Side', back: 'Back' };
+    const dragStart = liveReady ? null : (e) => { this._dragX = e.clientX; };
+    const dragEnd = liveReady ? null : (e) => {
+      if (this._dragX == null) return;
+      const dx = e.clientX - this._dragX;
+      this._dragX = null;
+      if (Math.abs(dx) < 40) return;
+      const step = dx < 0 ? 1 : -1;
+      const nv = RING[(RING.indexOf(s.view) + step + RING.length) % RING.length];
+      go({ view: nv }, step);
+    };
+    const flipTo = s.view === 'front' ? 'back' : 'front';
+
+    // Layers follow the header section: Overview all three, U-Body skeleton, U-Muscle muscle and skeleton, U-Nutrition all three.
+    // (The live model's body shell, which stands in for fat, is always drawn; it only has muscle and skeleton switches.)
+    const SECTIONS = [['overview', 'Overview'], ['body', 'U-Body'], ['muscle', 'U-Muscle'], ['nutrition', 'U-Nutrition']];
+    const LAYERS_OF = {
+      overview: { muscle: true, skeleton: true, fat: true }, body: { muscle: false, skeleton: true, fat: false },
+      muscle: { muscle: true, skeleton: true, fat: false }, nutrition: { muscle: true, skeleton: true, fat: true }
+    };
+    const L = LAYERS_OF[s.section] || LAYERS_OF.muscle;
+    const mOn = !!L.muscle;
+
+    // shapes
+    const cur = g[s.view];
+    const shapes = cur.map((p) => {
+      const isR = !!p.id;
+      const isSel = isR && !!s.sel && (SHAPES_OF[s.sel] || []).indexOf(p.id) >= 0;
+      const target = isR ? SHAPE_PICK[p.id] : null;
+      let fill, stroke, op;
+      if (isSel) { fill = '#CDFF20'; stroke = '#CDFF20'; op = 1; }
+      else if (isR) { fill = mOn ? '#7A7598' : 'rgba(0,0,0,0)'; stroke = mOn ? '#7A7598' : 'rgba(239,236,230,0.45)'; op = s.sel ? 0.24 : 1; }
+      else { fill = mOn ? '#3A3652' : 'rgba(0,0,0,0)'; stroke = mOn ? '#3A3652' : 'rgba(239,236,230,0.25)'; op = s.sel ? 0.4 : 1; }
+      return { d: p.d, fill: fill, stroke: stroke, op: op, pe: target ? 'all' : 'none', cursor: target ? 'pointer' : 'default', pick: target ? () => pick(target) : null };
+    });
+    const envD = cur.map((p) => p.d).join(' ');
+
+    // header tabs, view control, chips
+    const tabs = SECTIONS.map((t) => {
+      const a = t[0] === (LAYERS_OF[s.section] ? s.section : 'muscle');
+      return { label: t[1], current: a ? 'page' : null, bg: a ? '#FFFFFF' : 'transparent', color: a ? '#0B0B14' : '#FFFFFF', weight: a ? 600 : 400,
+        pick: () => toSection(t[0]) };
+    });
+    const FLAME = '#FF403C', WHITE = '#FFFFFF';
+    const fmt = (v, unit) => (v < 0 ? '−' : '') + Math.abs(v).toFixed(1) + (unit === 'cm' ? ' cm' : unit);
+    const rangeTxt = (f) => 'normal ' + (f.lo < 0 ? '−' : '') + Math.abs(f.lo) + ' to ' + f.hi + (f.unit === 'cm' ? ' cm' : f.unit);
+    // One list row: name (with a flag dot), a grey line under it, then optionally a bar and a value.
+    const row = (o) => Object.assign({ isHead: false, tap: false, still: false, flag: false, sub: '', hasBar: false, bar: 0, barColor: WHITE,
+      hasValue: false, value: '', valueColor: WHITE, aria: '', pick: null }, o);
+    const postureRow = (f, tap) => {
+      const out = outBy(f) > 0, dir = f.dir && f.v !== 0 ? f.dir[f.v < 0 ? 0 : 1] + ' · ' : '';
+      return row({ tap: !!tap, still: !tap, name: f.label, sub: dir ? dir + rangeTxt(f) : 'N' + rangeTxt(f).slice(1), hasValue: true, value: fmt(f.v, f.unit),
+        valueColor: out ? FLAME : WHITE, aria: f.label + ', ' + fmt(f.v, f.unit) + (out ? ', outside the normal range' : '') + (tap ? '. Show area' : ''),
+        pick: tap ? () => pickBody(POSTURE_AREAS.find((x) => x.keys.indexOf(f.key) >= 0).id) : null });
+    };
+
+    // U-Muscle: flagged tests worst first, then the program.
+    const scored = (t) => !!(REG[t] && REG[t].strength);
+    const pct = (t) => (asymOf(t) * 100).toFixed(1);
+    const muAttn = ORDER.filter((t) => scored(t) && asymOf(t) >= 0.1).sort((p, q) => asymOf(q) - asymOf(p)).map((t) => {
+      const side = REG[t].fR >= REG[t].fL ? 'Right stronger' : 'Left stronger';
+      return row({ tap: true, name: REG[t].name, sub: side + ' · Score ' + REG[t].strength, hasValue: true, value: pct(t) + '%', valueColor: FLAME,
+        aria: REG[t].name + ', ' + pct(t) + ' percent asymmetry, ' + side.toLowerCase() + '. Show details', pick: () => pick(t) });
+    });
+    const muAreasFlagged = AREAS.filter((a) => a.tests.some((t) => scored(t) && asymOf(t) >= 0.1)).length;
+    const allScores = ORDER.filter(scored).map((t) => REG[t].strength);
+    const avgScore = allScores.length ? Math.round(allScores.reduce((x, y) => x + y, 0) / allScores.length) : '–';
+    const valdProgram = [];
+    VALD_SECTIONS.forEach((sec) => {
+      const seen = {}, rows = [];
+      sec[1].filter(scored).forEach((t) => {
+        const d = valdDose(asymOf(t) * 100), rWeak = REG[t].fR < REG[t].fL;
+        const dose = 'R ' + (rWeak ? d[0] + ' × ' + d[1] : d[2] + ' × ' + d[3]) + ' · L ' + (rWeak ? d[2] + ' × ' + d[3] : d[0] + ' × ' + d[1]);
+        (VALD_EX[t] || []).forEach((n) => { if (!seen[n]) { seen[n] = 1; rows.push(row({ still: true, name: n, sub: dose })); } });
+      });
+      if (rows.length) valdProgram.push.apply(valdProgram, [row({ isHead: true, name: sec[0] })].concat(rows));
+    });
+
+    // U-Body: measurements outside the normal range, furthest out first, then the program.
+    const outFields = POSTURE.filter((f) => outBy(f) > 0).sort((p, q) => outBy(q) - outBy(p));
+    const areaOut = (a) => a.keys.filter((k) => outBy(PF[k]) > 0).length;
+    const nAreasOut = POSTURE_AREAS.filter((a) => areaOut(a) > 0).length;
+
+    // U-Body program. Forward head, kyphosis and lordosis are Bodydot's averaged side values, used for both cameras.
+    const bdGrade = (v, r) => {
+      const x = r[1];
+      if (r[0] === 'rr') {
+        const tl = (x[1] - x[0]) * 0.1, th = (x[3] - x[2]) * 0.1;
+        if ((v >= x[1] - tl && v <= x[1] + tl) || (v >= x[2] - th && v <= x[2] + th)) return 'middle';
+        return v > x[1] + tl && v < x[2] - th ? 'normal' : 'abnormal';
+      }
+      const tol = (x[2] - x[1]) * 0.1;
+      if (v >= x[1] - tol && v <= x[1] + tol) return 'middle';
+      return v >= x[0] && v < x[1] - tol ? 'normal' : 'abnormal';
+    };
+    const bdSide = (v, r) => { const lo = r[0] === 'br' ? r[1][0] : r[1][1], hi = r[0] === 'br' ? r[1][1] : r[1][2]; return v < lo ? 'negative' : v > hi ? 'positive' : 'normal'; };
+    const bd = { upper: [], lower: [], stretch: [] }, SETS = { normal: 2, middle: 3, abnormal: 4 };
+    const bdAdd = (grade, list, names) => names.forEach((n) => {
+      if (!bd[list].some((x) => x.name === n)) bd[list].push({ name: n, dose: SETS[grade] + ' × ' + (list === 'stretch' ? '30 s' : '10') });
+    });
+    const pv = (k) => PF[k].v;
+    [['L', 'Left', 'shoulderSlopeL'], ['R', 'Right', 'shoulderSlopeR']].forEach((x) => {
+      const v = pv(x[2]), side = bdSide(v, BD_RANGE.slope), g = bdGrade(v, BD_RANGE.slope);
+      if (side === 'negative') { bdAdd(g, 'upper', [x[1] + ' front single arm pushdown', x[1] + ' side single arm pushdown']); bdAdd(g, 'stretch', ['Stretching ' + x[1].toLowerCase() + ' upper traps']); }
+      else if (side === 'positive') bdAdd(g, 'upper', [x[1] + ' shrugs']);
+    });
+    // Pelvic tilt is graded by size; the lower side's opposite hip hikes (left side higher → right hip hike).
+    bdAdd(bdGrade(Math.abs(pv('hipHike')), BD_RANGE.pelvicTilt), 'lower', [pv('hipHike') >= 0 ? 'Left hip hike' : 'Right hip hike']);
+    [['Left', 'kneeL'], ['Right', 'kneeR']].forEach((x) => {
+      const v = pv(x[1]), side = bdSide(v, BD_RANGE.hka), g = bdGrade(v, BD_RANGE.hka);
+      if (side === 'positive') { bdAdd(g, 'lower', [x[0] + ' glute kickbacks', x[0] + ' hip adduction cable']); bdAdd(g, 'stretch', ['Stretching abductor']); }
+      else if (side === 'negative') { bdAdd(g, 'lower', [x[0] + ' hip abduction cable', x[0] + ' glute kickbacks']); bdAdd(g, 'stretch', ['Stretching adductor']); }
+    });
+    ['roundShoulderR', 'roundShoulderL'].forEach((k) => {
+      bdAdd(bdGrade(pv('forwardHead'), BD_RANGE.forwardHead), 'upper', ['Chin tucks']);
+      const g = bdGrade(pv(k), BD_RANGE.roundShoulder);
+      bdAdd(g, 'upper', ['Reverse flys', 'Face pull', 'External rotation']); bdAdd(g, 'stretch', ['Stretching chest']);
+      const gk = bdGrade(pv('kyphosis'), BD_RANGE.kyphosis);
+      bdAdd(gk, 'upper', ['Back extensions', 'Rowing back']); bdAdd(gk, 'stretch', ['Cobra pose']);
+      const side = bdSide(pv('lordosis'), BD_RANGE.lordosis), gl = bdGrade(pv('lordosis'), BD_RANGE.lordosis);
+      if (side === 'positive') { bdAdd(gl, 'upper', ['Crunches']); bdAdd(gl, 'stretch', ['Stretching hip flexors']); }
+      else if (side === 'negative') bdAdd(gl, 'upper', ['Lower back extensions']);
+    });
+    // Kendall knee, only when abnormal. As in that repo, the right camera's reading drives the left leg and vice versa.
+    [['kneeForwardR', 'Left'], ['kneeForwardL', 'Right']].forEach((x) => {
+      const v = pv(x[0]);
+      if (bdGrade(v, BD_RANGE.kendallKnee) !== 'abnormal') return;
+      bdAdd('abnormal', 'lower', v > 0 ? [x[1] + ' leg extensions', 'Single leg press ' + x[1].toLowerCase()] : [x[1] + ' hamstring curls']);
+    });
+    const bodyProgram = [];
+    [['Upper body', 'upper'], ['Lower body', 'lower'], ['Stretching', 'stretch']].forEach((sec) => {
+      if (!bd[sec[1]].length) return;
+      bodyProgram.push(row({ isHead: true, name: sec[0] }));
+      bd[sec[1]].forEach((e) => bodyProgram.push(row({ still: true, name: e.name, sub: e.dose })));
+    });
+
+    // U-Nutrition: the five InBody segments.
+    const segRows = SEGMENTS.map((g) => row({ tap: true, name: g.name, flag: g.v >= 125, sub: segStatus(g.v), hasBar: true, bar: Math.min(100, g.v / 2),
+      barColor: g.v >= 125 ? FLAME : 'rgba(239,236,230,0.85)', hasValue: true, value: g.v + '%', valueColor: g.v >= 125 ? FLAME : WHITE,
+      aria: g.name + ', fat ' + g.v + ' percent of normal, ' + segStatus(g.v).toLowerCase() + '. Show details', pick: () => pickSeg(g.id) }));
+    const worstSeg = SEGMENTS.slice().sort((p, q) => q.v - p.v)[0];
+
+    const tile = (label, value, unit, note, color) => ({ label: label, value: value, unit: unit, note: note, color: color || WHITE });
+    const SUMS = {
+      muscle: { title: 'Tap a muscle to see details',
+        chips: AREAS.map((a) => ({ label: a.name, pick: () => pick(firstTest(a)), aria: a.name + (a.tests.length > 1 ? ', ' + a.tests.length + ' tests' : '') })),
+        tiles: [tile('Average strength', avgScore, '/ 100', 'Across ' + allScores.length + ' tests'),
+          tile('Areas flagged', muAreasFlagged, 'of ' + AREAS.length, 'Asymmetry 10% or more', muAreasFlagged ? FLAME : WHITE)],
+        attn: muAttn, lowerTitle: 'Strength program · VALD', lower: valdProgram },
+      body: { title: 'Tap an area to see posture details',
+        chips: POSTURE_AREAS.map((a) => ({ label: a.name, pick: () => pickBody(a.id), aria: a.name + ' posture' })),
+        tiles: [tile('Outside normal range', outFields.length, 'of ' + POSTURE.length, 'Bodydot measurements', outFields.length ? FLAME : WHITE),
+          tile('Areas affected', nAreasOut, 'of ' + POSTURE_AREAS.length, 'Head to knees')],
+        attn: outFields.map((f) => postureRow(f, true)), lowerTitle: 'Posture program · Bodydot', lower: bodyProgram },
+      nutrition: { title: 'Tap a segment to see body fat',
+        chips: SEGMENTS.map((g) => ({ label: g.name, pick: () => pickSeg(g.id), aria: g.name + ' body fat' })),
+        tiles: [tile('Body fat', INBODY.pbf, '%', 'Fat mass ' + INBODY.fatKg.toFixed(1) + ' kg'),
+          tile('Skeletal muscle', INBODY.smm, 'kg', 'Weight ' + SCANS[s.scan][1])],
+        attn: [], lowerTitle: 'Segmental fat · % of normal', lower: segRows }
+    };
+    // Overview: one card per assessment; each opens its tab.
+    const ovCards = [
+      { title: 'U-Body', source: 'Posture · Bodydot', pick: () => toSection('body'),
+        v1: outFields.length, u1: 'of ' + POSTURE.length, l1: 'Outside normal range', c1: outFields.length ? FLAME : WHITE,
+        v2: nAreasOut, u2: 'of ' + POSTURE_AREAS.length, l2: 'Areas affected', c2: WHITE,
+        hasLine: outFields.length > 0, line: outFields.length ? outFields[0].label + ' · ' + fmt(outFields[0].v, outFields[0].unit) : '' },
+      { title: 'U-Muscle', source: 'Strength · VALD', pick: () => toSection('muscle'),
+        v1: avgScore, u1: '/ 100', l1: 'Average strength', c1: WHITE,
+        v2: muAreasFlagged, u2: 'of ' + AREAS.length, l2: 'Areas flagged', c2: muAreasFlagged ? FLAME : WHITE,
+        hasLine: muAttn.length > 0, line: muAttn.length ? muAttn[0].name + ' · ' + muAttn[0].value + ' asymmetry' : '' },
+      { title: 'U-Nutrition', source: 'Body composition · InBody', pick: () => toSection('nutrition'),
+        v1: INBODY.pbf, u1: '%', l1: 'Body fat', c1: WHITE, v2: INBODY.smm, u2: 'kg', l2: 'Skeletal muscle', c2: WHITE,
+        hasLine: worstSeg.v >= 125, line: worstSeg.name + ' fat · ' + worstSeg.v + '% of normal' }
+    ].map((o) => Object.assign(o, { aria: o.title + ', ' + o.source + '. Open ' + o.title }));
+    SUMS.overview = { title: 'Client overview',
+      chips: ovCards.map((o) => ({ label: o.title, pick: o.pick, aria: 'Open ' + o.title })),
+      tiles: [], attn: [], lowerTitle: '', lower: [] };
+    const SUM = SUMS[LAYERS_OF[s.section] ? s.section : 'muscle'];
+    const area = s.sel ? AREA_OF[s.sel] : null;
+    const subTests = area && area.tests.length > 1 ? area.tests.map((t) => {
+      const a = t === s.sel;
+      return { label: SHORT[t] || REG[t].name, selected: a, weight: a ? 600 : 400, color: a ? '#FFFFFF' : LINEN,
+        bg: a ? 'rgba(255,255,255,0.14)' : 'transparent', ring: a ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.2)', pick: () => pick(t) };
+    }) : [];
+
+    // selection details
+    const bArea = s.bsel ? PA[s.bsel] : null, seg = s.nsel ? SEG[s.nsel] : null;
+    const bodyDet = bArea ? bArea.keys.map((k) => postureRow(PF[k], false)) : [];
+    const pairSeg = seg && seg.pair ? SEG[seg.pair] : null;
+    const segTiles = seg ? [tile('Fat vs normal', seg.v, '%', segStatus(seg.v), seg.v >= 125 ? FLAME : WHITE),
+      pairSeg ? tile(pairSeg.name, pairSeg.v, '%', seg.v === pairSeg.v ? 'Same as ' + seg.name.toLowerCase()
+        : Math.abs(seg.v - pairSeg.v) + ' points ' + (seg.v > pairSeg.v ? 'lower' : 'higher') + ' than ' + seg.name.toLowerCase())
+        : tile('Whole-body fat', INBODY.pbf, '%', 'Fat mass ' + INBODY.fatKg.toFixed(1) + ' kg')] : [];
+    const r = s.sel ? REG[s.sel] : null;
+    const hasData = !!(r && r.strength);
+    const info = r ? {
+      name: area ? area.name : r.name, lower: r.name.toLowerCase().replace(' ir', ' IR').replace(' er', ' ER'),
+      stat: hasData ? 'Assessed ' + r.last : 'Not assessed yet',
+      strength: r.strength, delta: r.delta, last: r.last,
+      fR: r.fR, fL: r.fL,
+      barR: hasData ? Math.round(r.fR / Math.max(r.fR, r.fL) * 100) : 0,
+      barL: hasData ? Math.round(r.fL / Math.max(r.fR, r.fL) * 100) : 0,
+      asym: hasData ? (Math.abs(r.fR - r.fL) / Math.max(r.fR, r.fL) * 100).toFixed(1) : '',
+      asymNote: !hasData ? '' : (r.fR >= r.fL ? 'Right stronger' : 'Left stronger') + (Math.abs(r.fR - r.fL) / Math.max(r.fR, r.fL) >= 0.1 ? ' · 10% or more' : ''),
+      asymColor: hasData && Math.abs(r.fR - r.fL) / Math.max(r.fR, r.fL) >= 0.1 ? '#FF403C' : LINEN,
+      asymWeight: hasData && Math.abs(r.fR - r.fL) / Math.max(r.fR, r.fL) >= 0.1 ? 600 : 300
+    } : { name: '', lower: '', stat: '' };
+    const nextSnap = { peek: 'half', half: 'peek', full: 'half' };
+
+    // scans
+    // Comparison: only with an earlier scan than the one being viewed.
+    const cmp = typeof s.cmp === 'number' && s.cmp > s.scan && s.cmp < SCANS.length ? s.cmp : null;
+    const cmpOn = cmp !== null;
+    const scans = SCANS.map((x, i) => ({
+      date: x[0], meta: (i === 0 ? 'Latest · ' : '') + x[1], checked: s.scan === i,
+      bg: s.scan === i ? 'rgba(0,94,255,0.22)' : 'transparent', weight: s.scan === i ? 600 : 400,
+      pick: () => set({ scan: i, scanOpen: false, scanView: 'list', cmp: typeof s.cmp === 'number' && s.cmp > i ? s.cmp : null })
+    }));
+    const cmpScans = SCANS.map((x, i) => ({ x: x, i: i })).filter((o) => o.i > s.scan).map((o) => ({
+      date: o.x[0], meta: o.x[1] + (o.i === s.scan + 1 ? ' · previous scan' : ''), checked: cmp === o.i,
+      bg: cmp === o.i ? 'rgba(0,94,255,0.22)' : 'transparent', weight: cmp === o.i ? 600 : 400,
+      pick: () => set({ cmp: o.i, scanOpen: false, scanView: 'list' })
+    }));
+    // Earlier scans: sample values derived from the current one (placeholder until real history is wired in).
+    const hashOf = (t) => { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) % 997; return h; };
+    const prevOf = (t, age) => {
+      const x = REG[t]; if (!x || !x.fR) return null;
+      const h = hashOf(t), grow = 1 - 0.04 * age - (h % 5) * 0.005, tilt = (((h % 7) - 3) * 0.01 + 0.012) * age;
+      return { fR: Math.round(x.fR * (grow - tilt)), fL: Math.round(x.fL * (grow + tilt)), strength: x.strength - (2 + (h % 4)) * age };
+    };
+    const sign = (n) => (n > 0 ? '+' : n < 0 ? '−' : '±') + Math.abs(n);
+    if (hasData) {
+      const ref = cmpOn ? cmp : (s.scan + 1 < SCANS.length ? s.scan + 1 : null);
+      const p = ref !== null ? prevOf(s.sel, ref - s.scan) : null;
+      info.delta = p ? sign(r.strength - p.strength) + (cmpOn ? ' vs ' : ' since ') + SCANS[ref][0] : 'First scan';
+      info.cmp = cmpOn && !!p;
+      if (info.cmp) {
+        const aNow = asymOf(s.sel) * 100, aWas = Math.abs(p.fR - p.fL) / Math.max(p.fR, p.fL) * 100, dA = aNow - aWas;
+        info.asymWas = 'Was ' + aWas.toFixed(1) + '% · ' + (dA <= -0.05 ? 'more even' : dA >= 0.05 ? 'less even' : 'no change');
+        info.asymWasColor = dA >= 0.05 ? '#FF403C' : '#FFFFFF';
+        info.wasR = 'Was ' + p.fR + ' N · ' + sign(r.fR - p.fR);
+        info.wasL = 'Was ' + p.fL + ' N · ' + sign(r.fL - p.fL);
+      }
+    } else info.cmp = false;
+
+    // Bottom sheet: drag the handle to resize; it snaps to peek, half or full (a tap still steps through them).
+    const SNAPS = [['peek', SH.peek], ['half', SH.half]];
+    const dragging = typeof s.dragH === 'number';
+    const sheetHNow = dragging ? s.dragH : sheetH;
+    // Collapsed with nothing selected: the summary below the chips is hidden and starts from the top next time.
+    // Overview has no chips, so its cards stay visible and peek out under the title instead.
+    const sumShut = s.snap === 'peek' && !dragging, sumHide = sumShut && s.section !== 'overview';
+    this._sumShut = sumShut;
+    if (!this._sumRefFn) this._sumRefFn = (el) => { this._sumEl = el; };
+    if (sumShut && this._sumEl && this._sumEl.scrollTop) {
+      const el = this._sumEl;
+      setTimeout(() => { if (this._sumEl === el && this._sumShut) el.scrollTop = 0; }, 220);
+    }
+    const sheetDown = (e) => {
+      this._skipClick = false;
+      this._sd = { y0: e.clientY, h0: sheetH, moved: false };
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) { /* capture is optional */ }
+    };
+    const sheetMove = (e) => {
+      const d = this._sd; if (!d) return;
+      const dy = e.clientY - d.y0;
+      if (!d.moved && Math.abs(dy) < 6) return;
+      d.moved = true;
+      this.setState({ dragH: Math.max(110 + SB, Math.min(SH.half + 24, d.h0 - dy)) });
+    };
+    const sheetUp = (e) => {
+      const d = this._sd; this._sd = null; if (!d) return;
+      this._skipClick = true;
+      if (!d.moved) { set({ snap: nextSnap[s.snap], dragH: null }); return; }
+      // A short drag (24 px) is enough: it steps one snap in the drag's direction, otherwise the sheet springs back.
+      const moved = d.y0 - e.clientY;
+      let i = SNAPS.findIndex((sn) => sn[0] === s.snap); if (i < 0) i = SNAPS.length - 1;
+      if (moved > 24) i = Math.min(SNAPS.length - 1, i + 1); else if (moved < -24) i = Math.max(0, i - 1);
+      set({ snap: SNAPS[i][0], dragH: null });
+    };
+
+    // What the live model should show; pushed to it after each render.
+    this._host = {
+      view: s.view, group: s.sel || null, isoView: s.isoView || null,
+      muscle: !!L.muscle, skeleton: !!L.skeleton,
+      // Overview and U-Body stand the body in the client's Bodydot posture (as the 3D-Model app does); U-Muscle and
+      // U-Nutrition keep the standard pose.
+      pose: s.section === 'overview' || s.section === 'body' ? this.postureMatrices(POSTURE) : null,
+      insets: { top: 8, bottom: (s.snap === 'full' ? SH.half : sheetH) + 16 }
+    };
+    if (!this._refFn) this._refFn = (el) => { this._el = el; if (el) this.mountModel(); };
+
+    return {
+      setModelEl: this._refFn,
+      frameH: FH, mainH: FH - VT, vt: VT, headPadTop: 4 + ST, scanMenuTop: VT + 64, sheetPadB: PB,
+      showFlat: !live || !!s.merr,
+      showLoader: live && !s.mready && !s.merr,
+      loadPct: s.mp || 0,
+      loaderLabel: 'Preparing 3D body, ' + (s.mp || 0) + ' percent',
+      envFront: this._envFront || (this._envFront = g.front.map((p) => p.d).join(' ')),
+      showModelNote: live && !!s.merr,
+      modelNote: '3D model unavailable · showing the map',
+      tabs: tabs, shapes: shapes, envD: envD, scans: scans, info: info,
+      subTests: subTests, hasSubTests: subTests.length > 0, subTestsLabel: area ? area.name + ' tests' : '',
+      tx: tx, ty: ty, sc: sc,
+      dragStart: dragStart, dragEnd: dragEnd,
+      viewLabel: VIEW_NAMES[s.view],
+      flipAria: 'Showing ' + VIEW_NAMES[s.view] + '. Turn to ' + VIEW_NAMES[flipTo],
+      flip: () => go({ view: flipTo }, 1),
+      rot: s.rot, rotTrans: ROT_TRANS[s.rotT] || 'none',
+      spinScale: turning ? 0.94 : 1, spinOp: turning ? 0.55 : 1,
+      isFront: s.view === 'front', isSide: s.view === 'side', notSide: s.view !== 'side',
+      fatOp: L.fat ? 0.3 : 0,
+      muscleOp: 1,
+      skelOp: L.skeleton ? (mOn ? 0.6 : 0.9) : 0,
+      absLinesOp: mOn ? 1 : 0,
+      sheetH: sheetH, sheetHNow: sheetHNow,
+      sheetTrans: dragging ? 'none' : 'height 320ms cubic-bezier(.2,.8,.2,1)',
+      sheetDown: sheetDown, sheetMove: sheetMove, sheetUp: sheetUp,
+      cmpOn: cmpOn, cmpScans: cmpScans, noCmpScans: cmpScans.length === 0,
+      scanListView: s.scanView !== 'pick', scanPickView: s.scanView === 'pick',
+      openCmpPick: () => set({ scanView: 'pick' }),
+      scanBack: () => set({ scanView: 'list' }),
+      exitCmp: () => set({ cmp: null }),
+      scanCurrent: SCANS[s.scan][0],
+      notCmp: !cmpOn,
+      cmpRowLabel: cmpOn ? 'Comparing with ' + SCANS[cmp][0] : 'Compare with…',
+      cmpRowSub: cmpOn ? 'Pick a different scan' : 'See what changed since an earlier scan',
+      showRecenter: zoomed,
+      recenter: () => set({ recentered: true }),
+      noSel: !s.sel && !bArea && !seg, hasDet: !!s.sel || !!bArea || !!seg,
+      det: s.sel ? { name: info.name, stat: info.stat } : bArea ? { name: bArea.name, stat: 'Bodydot · ' + SCANS[s.scan][0] }
+        : seg ? { name: seg.name, stat: 'InBody · ' + SCANS[s.scan][0] } : { name: '', stat: '' },
+      showBodyDet: !!bArea, bodyDet: bodyDet, showSegDet: !!seg, segTiles: segTiles,
+      sheetTitle: SUM.title, chips: SUM.chips, isOv: s.section === 'overview', notOv: s.section !== 'overview', ovCards: ovCards,
+      sumTiles: SUM.tiles, sumAttn: SUM.attn, hasAttn: SUM.attn.length > 0, lowerTitle: SUM.lowerTitle, lower: SUM.lower,
+      sumOverflow: sumShut ? 'hidden' : 'auto', sumOp: sumHide ? 0 : 1, sumPe: sumHide ? 'none' : 'auto', sumRef: this._sumRefFn,
+      clear: () => set({ sel: null, bsel: null, nsel: null, snap: 'peek', recentered: false }),
+      clearLabel: 'Clear selection' + (r ? ': ' + r.name : bArea ? ': ' + bArea.name : seg ? ': ' + seg.name : ''),
+      handleLabel: 'Details sheet, ' + s.snap + '. Drag or tap to resize',
+      cycleSheet: () => { if (this._skipClick) { this._skipClick = false; return; } set({ snap: nextSnap[s.snap] }); },
+      showAssessData: !!s.sel && hasData,
+      showAssessEmpty: !!s.sel && !hasData,
+      scanOpen: s.scanOpen, moreOpen: s.moreOpen, menuOpen: s.scanOpen || s.moreOpen,
+      // Comparing: both dates without the year when they share one, so the pill fits beside Layers.
+      scanDate: cmpOn ? [s.scan, cmp].map((i) => SCANS[s.scan][0].slice(-4) === SCANS[cmp][0].slice(-4) ? SCANS[i][0].slice(0, -5) : SCANS[i][0]).join(' vs ') : SCANS[s.scan][0],
+      scanAria: cmpOn ? 'Comparing scan from ' + SCANS[s.scan][0] + ' with ' + SCANS[cmp][0] + '. Change scans' : 'Scan from ' + SCANS[s.scan][0] + '. Change scan or compare',
+      scanBtnBg: s.scanOpen ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.08)',
+      scanBtnRing: s.scanOpen ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.18)',
+      chevRot: s.scanOpen ? 180 : 0,
+      moreBg: s.moreOpen ? 'rgba(255,255,255,0.12)' : 'transparent',
+      toggleScan: () => set({ scanOpen: !s.scanOpen, scanView: 'list', moreOpen: false }),
+      toggleMore: () => set({ moreOpen: !s.moreOpen, scanOpen: false }),
+      openScans: () => set({ moreOpen: false, scanOpen: true }),
+      closeMenus: () => set({ scanOpen: false, moreOpen: false })
+    };
+  }
+}
+</script>
+<script>
+(function () {
+  // Stop iOS page zoom; pinch and drag belong to the 3D model.
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+  document.addEventListener('dblclick', function (e) { e.preventDefault(); }, { passive: false });
+  var stage = document.getElementById('stage'), phone = document.getElementById('phone');
+  var files = { '/models/bone-ao.bin': 'model/udra-bone-ao.js', '/models/rig-weights.bin.gz': 'model/udra-rig-weights.js' };
+  for (var i = 0; i < 9; i++) files['/models/body-' + i + '.bin.gz'] = 'model/udra-body-' + i + '.js';
+  var app = null;
+  var safe = document.getElementById('safe');
+  function layout() {
+    var W = window.innerWidth, H = window.innerHeight;
+    var cs = getComputedStyle(safe), insT = parseFloat(cs.paddingTop) || 0, insB = parseFloat(cs.paddingBottom) || 0;
+    // iOS 26 bug (WebKit 301994): a home-screen app's page can stop short of the bottom edge, with the system
+    // drawing the home-indicator strip itself. The page then already ends above the indicator, so no bottom inset.
+    if (navigator.standalone && screen.height - H > 20) insB = 0;
+    var phoneWide = W < 600, s = phoneWide ? W / 412 : Math.min(1, H / 820);
+    if (!phoneWide) { insT = 0; insB = 0; }
+    var frameH = Math.round(H / s);
+    stage.style.height = H + 'px';
+    phone.style.height = frameH + 'px';
+    phone.style.transform = 'translateX(' + Math.max(0, (W - 412 * s) / 2) + 'px) scale(' + s + ')';
+    var props = { frameH: frameH, safeTop: insT / s, safeBottom: insB / s, modelFiles: files };
+    if (app) app.update(props); else app = DCLite.mount(phone, document.getElementById('screen-tpl'), Component, props);
+  }
+  window.addEventListener('resize', layout);
+  window.addEventListener('orientationchange', function () { setTimeout(layout, 300); });
+  layout();
+  setTimeout(layout, 400);
+})();
+</script>
+</body>
+</html>
