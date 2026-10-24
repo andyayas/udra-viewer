@@ -26,7 +26,7 @@ function pack() {
     const flat = rel.replace(/\//g, '__').replace(/\./g, '_') + '.udra';
     keep.add(flat);
     const dest = path.join(OUT, flat);
-    // Only touch files that changed, so Metro doesn't re-hash the 28 MB model on every edit.
+    // Only touch files that changed, so Metro doesn't re-hash the model files on every edit.
     if (!fs.existsSync(dest) || !fs.readFileSync(dest).equals(data)) fs.writeFileSync(dest, data);
     lines.push(`  ['${rel}', require('./packed/${flat}')],`);
   }

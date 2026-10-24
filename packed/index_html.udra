@@ -113,13 +113,21 @@ body{margin:0}
 <div role="status" style="position: absolute; right: 16px; top: 64px; height: 28px; display: flex; align-items: center; padding: 0 12px; border-radius: 14px; background: rgba(25,27,40,0.92); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14); font-size: 12px; line-height: 16px; color: rgba(239,236,230,0.85); white-space: nowrap; z-index: 2">{{modelNote}}</div>
 </sc-if>
 
+<sc-if value="{{showFps}}" hint-placeholder-val="{{ false }}"><div id="fps-meter" aria-hidden="true" style="position: absolute; left: 16px; bottom: {{fpsBottom}}px; height: 22px; display: flex; align-items: center; padding: 0 8px; border-radius: 11px; background: rgba(0,0,0,0.6); font-size: 11px; line-height: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: #CDFF20; pointer-events: none; z-index: 2"></div></sc-if>
+<sc-if value="{{showComp}}" hint-placeholder-val="{{ false }}">
+<div role="group" aria-label="Show fat or water" style="position: absolute; left: 16px; top: 12px; display: flex; height: 44px; border-radius: 22px; background: rgba(26,29,48,0.78); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), inset 0 1px 0 rgba(255,255,255,0.2); z-index: 2">
+<sc-for list="{{comps}}" as="c" hint-placeholder-count="2">
+<button aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" style="min-width: 64px; height: 44px; padding: 0 14px; border: 0; border-radius: 22px; background: {{c.bg}}; color: {{c.color}}; font: inherit; font-size: 13px; font-weight: {{c.weight}}; cursor: pointer; transition: background 200ms ease">{{c.label}}</button>
+</sc-for>
+</div>
+</sc-if>
 <div style="position: absolute; right: 16px; top: 12px; display: flex; align-items: center; gap: 4px; z-index: 2">
 <sc-if value="{{cmpOn}}" hint-placeholder-val="{{ false }}">
-<button aria-label="Exit comparison" onClick="{{exitCmp}}" style="flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; padding: 0; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1px 0 rgba(255,255,255,0.2); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<button aria-label="Exit comparison" onClick="{{exitCmp}}" style="flex: none; width: 44px; height: 44px; border: 0; border-radius: 22px; padding: 0; background: rgba(26,29,48,0.78); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), inset 0 1px 0 rgba(255,255,255,0.2); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer">
 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
 </button>
 </sc-if>
-<button aria-haspopup="menu" aria-expanded="{{scanOpen}}" aria-label="{{scanAria}}" onClick="{{toggleScan}}" style="height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 12px 0 14px; border: 0; border-radius: 22px; background: {{scanBtnBg}}; box-shadow: inset 0 0 0 1px {{scanBtnRing}}, inset 0 1px 0 rgba(255,255,255,0.2); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer">
+<button aria-haspopup="menu" aria-expanded="{{scanOpen}}" aria-label="{{scanAria}}" onClick="{{toggleScan}}" style="height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 12px 0 14px; border: 0; border-radius: 22px; background: {{scanBtnBg}}; box-shadow: inset 0 0 0 1px {{scanBtnRing}}, inset 0 1px 0 rgba(255,255,255,0.2); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer">
 <sc-if value="{{notCmp}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"></rect><path d="M4 10h16M9 3v4M15 3v4"></path></svg></sc-if>
 <sc-if value="{{cmpOn}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M12 2v20"></path></svg></sc-if>
 {{scanDate}}
@@ -292,14 +300,14 @@ body{margin:0}
 <div style="display: flex; flex-direction: column; margin-top: -4px">
 <sc-for list="{{bodyDet}}" as="z" hint-placeholder-count="4">
 <sc-if value="{{z.isHead}}" hint-placeholder-val="{{ false }}"><span style="display: block; padding: 14px 0 2px; font-size: 13px; line-height: 18px; font-weight: 600; color: rgba(239,236,230,0.85)">{{z.name}}</span></sc-if>
-<sc-if value="{{z.tap}}" hint-placeholder-val="{{ true }}"><button aria-label="{{z.aria}}" onClick="{{z.pick}}" style="width: 100%; min-height: 60px; display: flex; align-items: center; gap: 12px; padding: 8px 0; border: 0; background: transparent; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14); color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+<sc-if value="{{z.tap}}" hint-placeholder-val="{{ true }}"><button aria-label="{{z.aria}}" onClick="{{z.pick}}" aria-pressed="{{z.selected}}" style="width: calc(100% + 24px); min-height: 60px; display: flex; align-items: center; gap: 12px; margin: 0 -12px; padding: 8px 12px; border: 0; border-radius: 12px; background: {{z.rowBg}}; box-shadow: inset 0 -1px 0 {{z.rowLine}}; transition: background 200ms ease; color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
 <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
 <span style="display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600">{{z.name}}<sc-if value="{{z.flag}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="display: block; flex: none; width: 6px; height: 6px; border-radius: 3px; background: #FF403C"></span></sc-if></span>
 <span style="font-size: 12px; line-height: 16px; font-weight: 300; color: rgba(239,236,230,0.7)">{{z.sub}}</span>
 </span>
 <sc-if value="{{z.hasBar}}" hint-placeholder-val="{{ false }}"><span style="flex: none; display: block; width: 64px; height: 4px; border-radius: 2px; background: rgba(239,236,230,0.12)"><span style="display: block; height: 4px; width: {{z.bar}}%; border-radius: 2px; background: {{z.barColor}}"></span></span></sc-if>
 <sc-if value="{{z.hasValue}}" hint-placeholder-val="{{ true }}"><span style="flex: none; min-width: 28px; text-align: right; font-size: 15px; line-height: 20px; font-weight: 600; color: {{z.valueColor}}">{{z.value}}</span></sc-if>
-<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(239,236,230,0.55)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M9 6l6 6-6 6"></path></svg>
+
 </button></sc-if>
 <sc-if value="{{z.still}}" hint-placeholder-val="{{ false }}"><div style="min-height: 60px; box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 8px 0; box-shadow: inset 0 -1px 0 rgba(255,255,255,0.14)">
 <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
@@ -323,7 +331,7 @@ body{margin:0}
 </div>
 </sc-for>
 </div>
-<p style="margin: 4px 0 0; font-size: 13px; line-height: 20px; font-weight: 300; color: rgba(239,236,230,0.7); text-wrap: pretty">InBody compares the fat in each segment with the normal amount for the client's height and weight. 100% is normal.</p>
+<p style="margin: 4px 0 0; font-size: 13px; line-height: 20px; font-weight: 300; color: rgba(239,236,230,0.7); text-wrap: pretty">{{segNote}}</p>
 </sc-if>
 
 </div>
@@ -400,7 +408,8 @@ body{margin:0}
         var s = document.createElement('script');
         s.src = u;
         s.onload = function () {
-          var v = window.__udraBin[u]; delete window.__udraBin[u]; s.remove();
+          // The files register under their plain path; the URL may carry a ?v= version (see the files map below).
+          var key = u.split('?')[0], v = window.__udraBin[key]; delete window.__udraBin[key]; s.remove();
           if (typeof v !== 'string') return reject(new Error('Model file missing: ' + u));
           resolve({ ok: true, status: 200, text: function () { return Promise.resolve('"' + v + '"'); } });
         };
@@ -410,6 +419,17 @@ body{margin:0}
     }
     return nativeFetch ? nativeFetch(u, o) : Promise.reject(new Error('fetch unavailable'));
   };
+})();
+</script>
+<script>
+// Development frame-rate meter: counts frames each second into #fps-meter (rendered only when served by the dev server).
+if (location.protocol === 'http:') (function () {
+  var n = 0, t0 = performance.now();
+  (function tick(t) {
+    n++;
+    if (t - t0 >= 1000) { var el = document.getElementById('fps-meter'); if (el) el.textContent = Math.round(n * 1000 / (t - t0)) + ' fps'; n = 0; t0 = t; }
+    requestAnimationFrame(tick);
+  })(t0);
 })();
 </script>
 <script src="udra-posture.js"></script>
@@ -460,7 +480,8 @@ class Component extends DCLogic {
       onProgress: (n) => { if (n === 100 || n - (this._mp || 0) >= 5) { this._mp = n; this.setState({ mp: n }); } },
       onReady: () => this.setState({ mready: true }),
       onError: (m) => this.setState({ merr: m || 'error' }),
-      onSelect: (gid) => { if (this._onModelPick) this._onModelPick(gid); }
+      onSelect: (gid) => { if (this._onModelPick) this._onModelPick(gid); },
+      onPostureArea: (a, m) => { if (this._onPostureArea) this._onPostureArea(a, m); }
     });
     if (this._host) this._ctl.update(this._host);
   }
@@ -591,6 +612,7 @@ class Component extends DCLogic {
     const asymOf = (t) => { const x = REG[t]; return x && x.fR ? Math.abs(x.fR - x.fL) / Math.max(x.fR, x.fL) : -1; };
     // Opening an area lands on its most uneven test, so the issue shows first.
     const firstTest = (a) => a.tests.slice().sort((p, q) => asymOf(q) - asymOf(p))[0];
+    const valdResults = Object.keys(REG).filter((t) => REG[t].fR).map((t) => ({ group: t, left: REG[t].fL, right: REG[t].fR }));
     const ORDER = ['push', 'pull', 'shoulder-flexion', 'shoulder-abduction', 'shoulder-ir', 'shoulder-er', 'elbow-flexion', 'elbow-extension', 'grip', 'trunk-lateral-flexion', 'hip-flexion', 'hip-extension', 'hip-abduction', 'hip-adduction', 'knee-extension', 'knee-flexion'];
     const BACK_ONLY = { pull: 1, 'shoulder-er': 1, 'elbow-extension': 1, 'hip-extension': 1, 'hip-abduction': 1, 'knee-flexion': 1 };
     const FRONT_ONLY = { push: 1, 'shoulder-flexion': 1, 'elbow-flexion': 1, grip: 1, 'trunk-lateral-flexion': 1, 'hip-flexion': 1, 'hip-adduction': 1, 'knee-extension': 1 };
@@ -636,13 +658,18 @@ class Component extends DCLogic {
 
     const pick = (id) => {
       if (id === s.sel && !s.recentered) return;
+      // The flat map only draws back muscles from behind (and front ones from the front), so it turns to show them. The live
+      // model flies to each test's best side by itself and keeps the current view as home: closing returns to it.
       let view = s.view;
-      if (BACK_ONLY[id]) view = 'back';
-      if (FRONT_ONLY[id]) view = 'front';
+      if (!liveReady && BACK_ONLY[id]) view = 'back';
+      if (!liveReady && FRONT_ONLY[id]) view = 'front';
       go({ sel: id, view: view, isoView: null, snap: s.snap === 'peek' ? 'half' : s.snap, recentered: false, scanOpen: false, moreOpen: false });
     };
     // Tapping a muscle on the model only counts where muscles are shown (Overview, U-Muscle).
     this._onModelPick = (gid) => { if (gid && REG[gid] && (s.section === 'overview' || s.section === 'muscle')) pick(gid); };
+    // U-Body: tapping a bone opens its posture area.
+    // U-Body: tapping a bone opens its posture area (and, if given, that measurement).
+    this._onPostureArea = (a, m) => { if (s.section === 'body' && PA[a]) pickBody(a, m && PA[a].keys.indexOf(m) >= 0 ? m : undefined); };
 
     const SCANS = [['8 Sep 2026', '84.5 kg'], ['12 Jul 2026', '85.9 kg'], ['3 May 2026', '87.2 kg'], ['14 Feb 2026', '88.4 kg']];
     // U-Body: Bodydot posture. Fields, labels and normal ranges are the 3D-Model repo's POSTURE_FIELDS (app/posture.ts);
@@ -681,17 +708,36 @@ class Component extends DCLogic {
     const PA = {}; POSTURE_AREAS.forEach((a) => { PA[a.id] = a; });
     const outBy = (f) => (f.v < f.lo ? f.lo - f.v : f.v > f.hi ? f.v - f.hi : 0);
 
-    // U-Nutrition: InBody. Segmental fat is the 3D-Model repo's InBodyResult (fat in that segment as a percent of normal,
-    // 100 = normal) with its DEMO_INBODY values. Whole-body numbers are placeholder demo values.
-    // Status bands follow that repo's fat colour ramp (100 normal, 125 the warning point).
-    const INBODY = { pbf: 24.8, fatKg: 21.0, smm: 36.2 };
+    // U-Nutrition: InBody 270S, as the 3D-Model repo models it (app/results.ts InBodyResult, its SAMPLE_INBODY, a real
+    // result): per segment, fat and lean in kg and as a percent of normal for this person (100 = normal), plus total body
+    // water and skeletal muscle mass with their printed ranges. Bands are InBody's own: fat Under below 80% / Over above
+    // 160%; lean normal 85–115% for arms, 90–110% for trunk and legs. Water is judged against muscle (hydration).
+    const INBODY = { tbw: 49.2, tbwRange: [38.3, 46.9], smm: 38.3, smmRange: [29.2, 35.6] };
     const SEGMENTS = [
-      { id: 'trunk', name: 'Trunk', v: 162 },
-      { id: 'right-arm', name: 'Right arm', v: 104, pair: 'left-arm' }, { id: 'left-arm', name: 'Left arm', v: 110, pair: 'right-arm' },
-      { id: 'right-leg', name: 'Right leg', v: 121, pair: 'left-leg' }, { id: 'left-leg', name: 'Left leg', v: 116, pair: 'right-leg' }
+      { id: 'trunk', name: 'Trunk', fatKg: 6.9, fatPct: 160.6, leanKg: 29.4, leanPct: 108.8 },
+      { id: 'right-arm', name: 'Right arm', fatKg: 0.5, fatPct: 84.6, leanKg: 3.91, leanPct: 115.2 },
+      { id: 'left-arm', name: 'Left arm', fatKg: 0.6, fatPct: 91, leanKg: 3.83, leanPct: 112.8 },
+      { id: 'right-leg', name: 'Right leg', fatKg: 1.8, fatPct: 101.9, leanKg: 9.78, leanPct: 103.6 },
+      { id: 'left-leg', name: 'Left leg', fatKg: 1.8, fatPct: 101.9, leanKg: 9.72, leanPct: 103 }
     ];
     const SEG = {}; SEGMENTS.forEach((g) => { SEG[g.id] = g; });
-    const segStatus = (v) => (v >= 125 ? 'Above normal' : v >= 110 ? 'Slightly above normal' : v >= 90 ? 'Normal' : 'Below normal');
+    // The same result in the model's InBodyResult shape, and its water fill (0.7 when water and muscle are in step,
+    // up to the neck from about 1.13; the 3D-Model repo's waterFill()).
+    const SEG_KEY = { trunk: 'trunk', 'right-arm': 'rightArm', 'left-arm': 'leftArm', 'right-leg': 'rightLeg', 'left-leg': 'leftLeg' };
+    const inbodyResult = { segments: {}, tbw: INBODY.tbw, tbwRange: INBODY.tbwRange, smm: INBODY.smm, smmRange: INBODY.smmRange };
+    SEGMENTS.forEach((g) => { inbodyResult.segments[SEG_KEY[g.id]] = { fatKg: g.fatKg, fatPct: g.fatPct, leanKg: g.leanKg, leanPct: g.leanPct }; });
+    const FAT_NORMAL = [80, 160], leanNormal = (id) => (/arm$/.test(id) ? [85, 115] : [90, 110]);
+    const band = (pct, r) => (pct < r[0] ? 'Under' : pct > r[1] ? 'Over' : 'Normal');
+    const mid = (r) => (r[0] + r[1]) / 2;
+    const hydration = (INBODY.tbw / mid(INBODY.tbwRange)) / (INBODY.smm / mid(INBODY.smmRange));
+    const waterStatus = hydration > 1.05 ? 'Retaining water' : hydration < 0.95 ? 'Low body water' : 'Normal';
+    const waterFill = Math.min(1, Math.max(0.15, 0.7 + (hydration - 1) * 2.3));
+    const MODE_OF = { overview: 'overview', body: 'skeleton', muscle: 'muscles', nutrition: 'fat' };
+    const comp = s.comp === 'water' ? 'water' : 'fat';
+    const comps = [['fat', 'Fat'], ['water', 'Water']].map((c) => {
+      const a = comp === c[0];
+      return { label: c[1], pressed: a, bg: a ? '#FFFFFF' : 'transparent', color: a ? '#0B0B14' : '#FFFFFF', weight: a ? 600 : 400, pick: () => set({ comp: c[0] }) };
+    });
 
     // Programs: the rules from the VALD-automator repo (thefitxperience/VALD-automator), ported as-is.
     // U-Muscle (web/backend/program_builder.py): each tested movement prescribes its exercises; the asymmetry band sets
@@ -729,9 +775,12 @@ class Component extends DCLogic {
     // U-Body areas and U-Nutrition segments open their own details; a header tab change keeps a muscle only where
     // muscles are shown.
     const half = () => (s.snap === 'peek' ? 'half' : s.snap);
-    const pickBody = (id) => set({ bsel: id, sel: null, nsel: null, snap: half(), scanOpen: false, moreOpen: false });
+    // Opening an area (chip, row, or a tapped bone) also picks the measurement the model draws: the given one, else the area's
+    // furthest outside its range, else its first. Tapping another row in the area's sheet switches it.
+    const leadOf = (id) => { const a = PA[id], out = a.keys.filter((k) => outBy(PF[k]) > 0).sort((p, q) => outBy(PF[q]) - outBy(PF[p])); return out[0] || a.keys[0]; };
+    const pickBody = (id, metric) => set({ bsel: id, bmetric: metric || leadOf(id), sel: null, nsel: null, snap: half(), scanOpen: false, moreOpen: false });
     const pickSeg = (id) => set({ nsel: id, sel: null, bsel: null, snap: half(), scanOpen: false, moreOpen: false });
-    const toSection = (k) => set({ section: k, bsel: null, nsel: null, sel: k === 'overview' || k === 'muscle' ? s.sel : null, recentered: false, scanOpen: false, moreOpen: false });
+    const toSection = (k) => set({ section: k, bsel: null, bmetric: null, nsel: null, sel: k === 'overview' || k === 'muscle' ? s.sel : null, recentered: false, scanOpen: false, moreOpen: false });
 
     // geometry of the frame
     // Frame height: 915 on the canvas; the standalone phone page passes the real screen height,
@@ -746,10 +795,10 @@ class Component extends DCLogic {
     const selFlag = !!(selR && selR.strength && Math.abs(selR.fR - selR.fL) / Math.max(selR.fR, selR.fL) >= 0.1);
     const cmpShown = typeof s.cmp === 'number' && s.cmp > s.scan && s.cmp < 4 && !!(selR && selR.strength);
     // A U-Body area: header plus one 60 px row per measurement. A U-Nutrition segment: header, two cards and a note
-    // (an arm or leg's second card compares it with the other side, which takes an extra line).
+    // (one line shorter for the arms). Lean stays white even when Over: more lean mass isn't a problem.
     // With nothing selected it shows the overview: the two summary cards and the first rows of Needs attention,
     // the last one cut off so the list reads as scrollable.
-    const halfH = s.bsel && PA[s.bsel] ? 90 + PA[s.bsel].keys.length * 60 : s.nsel && SEG[s.nsel] ? (SEG[s.nsel].pair ? 288 : 272) : !s.sel ? 410 : 304 + (selFlag ? 16 : 0) + (selArea && selArea.tests.length > 1 ? 50 : 0) + (cmpShown ? 44 : 0);
+    const halfH = s.bsel && PA[s.bsel] ? 90 + PA[s.bsel].keys.length * 60 : s.nsel && SEG[s.nsel] ? (/arm$/.test(s.nsel) ? 252 : 272) : !s.sel ? 410 : 304 + (selFlag ? 16 : 0) + (selArea && selArea.tests.length > 1 ? 50 : 0) + (cmpShown ? 44 : 0);
     // Bottom gap under the sheet content: clears the home indicator, 12 px at least.
     // Peek fits its content (handle 30 + title 38 + chips 46 = 114).
     const PB = Math.max(12, SB);
@@ -822,7 +871,7 @@ class Component extends DCLogic {
       const out = outBy(f) > 0, dir = f.dir && f.v !== 0 ? f.dir[f.v < 0 ? 0 : 1] + ' · ' : '';
       return row({ tap: !!tap, still: !tap, name: f.label, sub: dir ? dir + rangeTxt(f) : 'N' + rangeTxt(f).slice(1), hasValue: true, value: fmt(f.v, f.unit),
         valueColor: out ? FLAME : WHITE, aria: f.label + ', ' + fmt(f.v, f.unit) + (out ? ', outside the normal range' : '') + (tap ? '. Show area' : ''),
-        pick: tap ? () => pickBody(POSTURE_AREAS.find((x) => x.keys.indexOf(f.key) >= 0).id) : null });
+        pick: tap ? () => pickBody(POSTURE_AREAS.find((x) => x.keys.indexOf(f.key) >= 0).id, f.key) : null });
     };
 
     // U-Muscle: flagged tests worst first, then the program.
@@ -906,10 +955,14 @@ class Component extends DCLogic {
     });
 
     // U-Nutrition: the five InBody segments.
-    const segRows = SEGMENTS.map((g) => row({ tap: true, name: g.name, flag: g.v >= 125, sub: segStatus(g.v), hasBar: true, bar: Math.min(100, g.v / 2),
-      barColor: g.v >= 125 ? FLAME : 'rgba(239,236,230,0.85)', hasValue: true, value: g.v + '%', valueColor: g.v >= 125 ? FLAME : WHITE,
-      aria: g.name + ', fat ' + g.v + ' percent of normal, ' + segStatus(g.v).toLowerCase() + '. Show details', pick: () => pickSeg(g.id) }));
-    const worstSeg = SEGMENTS.slice().sort((p, q) => q.v - p.v)[0];
+    const segRows = SEGMENTS.map((g) => {
+      const fb = band(g.fatPct, FAT_NORMAL), over = fb === 'Over', pct = Math.round(g.fatPct);
+      return row({ tap: true, name: g.name, flag: over, sub: fb + ' · ' + g.fatKg.toFixed(1) + ' kg fat', hasBar: true, bar: Math.min(100, g.fatPct / 2),
+        barColor: over ? FLAME : 'rgba(239,236,230,0.85)', hasValue: true, value: pct + '%', valueColor: over ? FLAME : WHITE,
+        aria: g.name + ', fat ' + pct + ' percent of normal, ' + fb.toLowerCase() + '. Show details', pick: () => pickSeg(g.id) });
+    });
+    const worstSeg = SEGMENTS.slice().sort((p, q) => q.fatPct - p.fatPct)[0];
+    const waterNote = waterStatus === 'Normal' ? 'In step with muscle' : waterStatus;
 
     const tile = (label, value, unit, note, color) => ({ label: label, value: value, unit: unit, note: note, color: color || WHITE });
     const SUMS = {
@@ -923,10 +976,10 @@ class Component extends DCLogic {
         tiles: [tile('Outside normal range', outFields.length, 'of ' + POSTURE.length, 'Bodydot measurements', outFields.length ? FLAME : WHITE),
           tile('Areas affected', nAreasOut, 'of ' + POSTURE_AREAS.length, 'Head to knees')],
         attn: outFields.map((f) => postureRow(f, true)), lowerTitle: 'Posture program · Bodydot', lower: bodyProgram },
-      nutrition: { title: 'Tap a segment to see body fat',
-        chips: SEGMENTS.map((g) => ({ label: g.name, pick: () => pickSeg(g.id), aria: g.name + ' body fat' })),
-        tiles: [tile('Body fat', INBODY.pbf, '%', 'Fat mass ' + INBODY.fatKg.toFixed(1) + ' kg'),
-          tile('Skeletal muscle', INBODY.smm, 'kg', 'Weight ' + SCANS[s.scan][1])],
+      nutrition: { title: 'Tap a segment to see fat and lean',
+        chips: SEGMENTS.map((g) => ({ label: g.name, pick: () => pickSeg(g.id), aria: g.name + ' body composition' })),
+        tiles: [tile('Body water', INBODY.tbw, 'L', waterNote, waterStatus === 'Normal' ? WHITE : FLAME),
+          tile('Skeletal muscle', INBODY.smm, 'kg', 'Normal ' + INBODY.smmRange[0] + '–' + INBODY.smmRange[1] + ' kg')],
         attn: [], lowerTitle: 'Segmental fat · % of normal', lower: segRows }
     };
     // Overview: one card per assessment; each opens its tab.
@@ -940,8 +993,8 @@ class Component extends DCLogic {
         v2: muAreasFlagged, u2: 'of ' + AREAS.length, l2: 'Areas flagged', c2: muAreasFlagged ? FLAME : WHITE,
         hasLine: muAttn.length > 0, line: muAttn.length ? muAttn[0].name + ' · ' + muAttn[0].value + ' asymmetry' : '' },
       { title: 'U-Nutrition', source: 'Body composition · InBody', pick: () => toSection('nutrition'),
-        v1: INBODY.pbf, u1: '%', l1: 'Body fat', c1: WHITE, v2: INBODY.smm, u2: 'kg', l2: 'Skeletal muscle', c2: WHITE,
-        hasLine: worstSeg.v >= 125, line: worstSeg.name + ' fat · ' + worstSeg.v + '% of normal' }
+        v1: INBODY.tbw, u1: 'L', l1: 'Body water', c1: waterStatus === 'Normal' ? WHITE : FLAME, v2: INBODY.smm, u2: 'kg', l2: 'Skeletal muscle', c2: WHITE,
+        hasLine: band(worstSeg.fatPct, FAT_NORMAL) === 'Over', line: worstSeg.name + ' fat · ' + Math.round(worstSeg.fatPct) + '% of normal' }
     ].map((o) => Object.assign(o, { aria: o.title + ', ' + o.source + '. Open ' + o.title }));
     SUMS.overview = { title: 'Client overview',
       chips: ovCards.map((o) => ({ label: o.title, pick: o.pick, aria: 'Open ' + o.title })),
@@ -956,12 +1009,18 @@ class Component extends DCLogic {
 
     // selection details
     const bArea = s.bsel ? PA[s.bsel] : null, seg = s.nsel ? SEG[s.nsel] : null;
-    const bodyDet = bArea ? bArea.keys.map((k) => postureRow(PF[k], false)) : [];
-    const pairSeg = seg && seg.pair ? SEG[seg.pair] : null;
-    const segTiles = seg ? [tile('Fat vs normal', seg.v, '%', segStatus(seg.v), seg.v >= 125 ? FLAME : WHITE),
-      pairSeg ? tile(pairSeg.name, pairSeg.v, '%', seg.v === pairSeg.v ? 'Same as ' + seg.name.toLowerCase()
-        : Math.abs(seg.v - pairSeg.v) + ' points ' + (seg.v > pairSeg.v ? 'lower' : 'higher') + ' than ' + seg.name.toLowerCase())
-        : tile('Whole-body fat', INBODY.pbf, '%', 'Fat mass ' + INBODY.fatKg.toFixed(1) + ' kg')] : [];
+    const bodyDet = bArea ? bArea.keys.map((k) => {
+      const on = s.bmetric === k, r = postureRow(PF[k], false);
+      return Object.assign(r, { still: false, tap: true, rowBg: on ? 'rgba(100,224,255,0.12)' : 'transparent', rowLine: on ? 'transparent' : 'rgba(255,255,255,0.14)',
+        selected: on, aria: r.aria + (on ? ', shown on the body' : '. Show on the body'), pick: () => set({ bmetric: k }) });
+    }) : [];
+    const segTiles = seg ? (() => {
+      const fb = band(seg.fatPct, FAT_NORMAL), lb = band(seg.leanPct, leanNormal(seg.id));
+      return [tile('Fat', Math.round(seg.fatPct), '% of normal', fb + ' · ' + seg.fatKg.toFixed(1) + ' kg', fb === 'Over' ? FLAME : WHITE),
+        tile('Lean', Math.round(seg.leanPct), '% of normal', lb + ' · ' + seg.leanKg.toFixed(1) + ' kg')];
+    })() : [];
+    const segNote = seg ? 'Body water: ' + waterStatus.toLowerCase() + ' (' + INBODY.tbw + ' L, measured against muscle). InBody normal: fat 80–160%, lean '
+      + leanNormal(seg.id).join('–') + '% for ' + (/arm$/.test(seg.id) ? 'arms' : 'the trunk and legs') + '.' : '';
     const r = s.sel ? REG[s.sel] : null;
     const hasData = !!(r && r.strength);
     const info = r ? {
@@ -1057,7 +1116,19 @@ class Component extends DCLogic {
       // Overview and U-Body stand the body in the client's Bodydot posture (as the 3D-Model app does); U-Muscle and
       // U-Nutrition keep the standard pose.
       pose: s.section === 'overview' || s.section === 'body' ? this.postureMatrices(POSTURE) : null,
-      insets: { top: 8, bottom: (s.snap === 'full' ? SH.half : sheetH) + 16 }
+      // U-Body: the open area's measurement drawn on the body (the camera flies to the side Bodydot reads it from).
+      postureFocus: s.section === 'body' && bArea ? { area: s.bsel, metric: s.bmetric || leadOf(s.bsel) } : null,
+      postureValues: this._postureValues || (this._postureValues = POSTURE.reduce((o, f) => { o[f.key] = f.v; return o; }, {})),
+      // The model's own modes: VALD colours in Overview and U-Muscle; U-Nutrition shows fat or water (the switch);
+      // Overview shows both at half strength.
+      mode: MODE_OF[s.section] || 'muscles', highlights: valdResults,
+      fat: s.section === 'overview' || (s.section === 'nutrition' && comp === 'fat') ? inbodyResult : null,
+      water: s.section === 'overview' || (s.section === 'nutrition' && comp === 'water') ? waterFill : 0,
+      // U-Nutrition: the picked segment is zoomed in on and its fat kept, the others' faded.
+      segmentFocus: s.section === 'nutrition' && seg ? s.nsel : null,
+      // While a posture measurement is drawn, a muscle is isolated or a segment is zoomed in on, the framing stays clear of the
+      // pills at the top of the stage.
+      insets: { top: (s.section === 'body' && bArea) || s.sel || (s.section === 'nutrition' && seg) ? 64 : 8, bottom: (s.snap === 'full' ? SH.half : sheetH) + 16 }
     };
     if (!this._refFn) this._refFn = (el) => { this._el = el; if (el) this.mountModel(); };
 
@@ -1102,11 +1173,14 @@ class Component extends DCLogic {
       noSel: !s.sel && !bArea && !seg, hasDet: !!s.sel || !!bArea || !!seg,
       det: s.sel ? { name: info.name, stat: info.stat } : bArea ? { name: bArea.name, stat: 'Bodydot · ' + SCANS[s.scan][0] }
         : seg ? { name: seg.name, stat: 'InBody · ' + SCANS[s.scan][0] } : { name: '', stat: '' },
-      showBodyDet: !!bArea, bodyDet: bodyDet, showSegDet: !!seg, segTiles: segTiles,
+      showComp: s.section === 'nutrition', comps: comps,
+      // Development only: frame rate, shown when the phone loads the screen from the dev server.
+      showFps: location.protocol === 'http:', fpsBottom: sheetHNow + 8,
+      showBodyDet: !!bArea, bodyDet: bodyDet, showSegDet: !!seg, segTiles: segTiles, segNote: segNote,
       sheetTitle: SUM.title, chips: SUM.chips, isOv: s.section === 'overview', notOv: s.section !== 'overview', ovCards: ovCards,
       sumTiles: SUM.tiles, sumAttn: SUM.attn, hasAttn: SUM.attn.length > 0, lowerTitle: SUM.lowerTitle, lower: SUM.lower,
       sumOverflow: sumShut ? 'hidden' : 'auto', sumOp: sumHide ? 0 : 1, sumPe: sumHide ? 'none' : 'auto', sumRef: this._sumRefFn,
-      clear: () => set({ sel: null, bsel: null, nsel: null, snap: 'peek', recentered: false }),
+      clear: () => set({ sel: null, bsel: null, bmetric: null, nsel: null, snap: 'peek', recentered: false }),
       clearLabel: 'Clear selection' + (r ? ': ' + r.name : bArea ? ': ' + bArea.name : seg ? ': ' + seg.name : ''),
       handleLabel: 'Details sheet, ' + s.snap + '. Drag or tap to resize',
       cycleSheet: () => { if (this._skipClick) { this._skipClick = false; return; } set({ snap: nextSnap[s.snap] }); },
@@ -1116,7 +1190,8 @@ class Component extends DCLogic {
       // Comparing: both dates without the year when they share one, so the pill fits beside Layers.
       scanDate: cmpOn ? [s.scan, cmp].map((i) => SCANS[s.scan][0].slice(-4) === SCANS[cmp][0].slice(-4) ? SCANS[i][0].slice(0, -5) : SCANS[i][0]).join(' vs ') : SCANS[s.scan][0],
       scanAria: cmpOn ? 'Comparing scan from ' + SCANS[s.scan][0] + ' with ' + SCANS[cmp][0] + '. Change scans' : 'Scan from ' + SCANS[s.scan][0] + '. Change scan or compare',
-      scanBtnBg: s.scanOpen ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.08)',
+      // Pills over the model use a plain translucent fill, not a backdrop blur: iOS re-blurs every frame the model animates.
+      scanBtnBg: s.scanOpen ? 'rgba(52,56,80,0.9)' : 'rgba(26,29,48,0.78)',
       scanBtnRing: s.scanOpen ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.18)',
       chevRot: s.scanOpen ? 180 : 0,
       moreBg: s.moreOpen ? 'rgba(255,255,255,0.12)' : 'transparent',
@@ -1134,8 +1209,13 @@ class Component extends DCLogic {
   document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
   document.addEventListener('dblclick', function (e) { e.preventDefault(); }, { passive: false });
   var stage = document.getElementById('stage'), phone = document.getElementById('phone');
-  var files = { '/models/bone-ao.bin': 'model/udra-bone-ao.js', '/models/rig-weights.bin.gz': 'model/udra-rig-weights.js' };
-  for (var i = 0; i < 9; i++) files['/models/body-' + i + '.bin.gz'] = 'model/udra-body-' + i + '.js';
+  // Model files, loaded through the fetch shim above. From the dev server the URLs carry the model files' version
+  // (window.__udraModelVersion, added by scripts/dev.js), so new model files are never mixed with cached old ones; the
+  // installed copy reinstalls on any change, so it uses plain file:// URLs. The model has 3 body chunks now; the map lists
+  // up to 9 because the viewer ignores entries its atlas doesn't use.
+  var mv = window.__udraModelVersion ? '?v=' + window.__udraModelVersion : '';
+  var files = { '/models/bone-ao.bin': 'model/udra-bone-ao.js' + mv, '/models/rig-weights.bin.gz': 'model/udra-rig-weights.js' + mv };
+  for (var i = 0; i < 9; i++) files['/models/body-' + i + '.bin.gz'] = 'model/udra-body-' + i + '.js' + mv;
   var app = null;
   var safe = document.getElementById('safe');
   function layout() {

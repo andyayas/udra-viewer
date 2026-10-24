@@ -122,6 +122,8 @@ export default function App() {
         setSupportMultipleWindows={false}
         javaScriptEnabled
         domStorageEnabled
+        // Development: lets Safari's Web Inspector on the Mac profile the screen (Develop menu → the iPhone).
+        webviewDebuggingEnabled={__DEV__}
         onContentProcessDidTerminate={() => setReloadKey((k) => k + 1)}
       />
     </View>

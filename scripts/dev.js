@@ -10,6 +10,14 @@ const WEB = path.join(__dirname, '..', 'screen');
 const PORT = Number(process.env.UDRA_WEB_PORT || 8090);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.png': 'image/png', '.json': 'application/json', '.css': 'text/css' };
 const RELOAD = '\n<script>try{new EventSource("/__reload").onmessage=function(){location.reload()}}catch(e){}</script>\n';
+const crypto = require('crypto');
+// The model files' version (names, sizes, modification times): index.html adds it to the model URLs so the phone never
+// mixes new model files with cached old ones.
+const modelVersion = () => {
+  const dir = path.join(WEB, 'model'), h = crypto.createHash('sha1');
+  for (const f of fs.readdirSync(dir).sort()) { const st = fs.statSync(path.join(dir, f)); h.update(f + ':' + st.size + ':' + st.mtimeMs + ';'); }
+  return h.digest('hex').slice(0, 12);
+};
 
 pack();
 
@@ -27,9 +35,17 @@ const server = http.createServer((req, res) => {
   const rel = url === '/' ? 'index.html' : url.replace(/^\/+/, '');
   const file = path.join(WEB, rel);
   if (!file.startsWith(WEB) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('Not found'); }
+  const type = TYPES[path.extname(file)] || 'application/octet-stream';
+  // Model files (several MB) revalidate on every load: unchanged ones answer with a cheap 304.
+  if (rel.startsWith('model/')) {
+    const st = fs.statSync(file), etag = '"' + st.size.toString(16) + '-' + Math.floor(st.mtimeMs).toString(16) + '"';
+    if (req.headers['if-none-match'] === etag) { res.writeHead(304, { ETag: etag, 'Cache-Control': 'no-cache' }); return res.end(); }
+    res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-cache', ETag: etag });
+    return res.end(fs.readFileSync(file));
+  }
   let body = fs.readFileSync(file);
-  if (rel === 'index.html') body = Buffer.from(body.toString('utf8').replace('</body>', RELOAD + '</body>'));
-  res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': rel.startsWith('model/') ? 'max-age=3600' : 'no-store' });
+  if (rel === 'index.html') body = Buffer.from(body.toString('utf8').replace('<head>', '<head>\n<script>window.__udraModelVersion="' + modelVersion() + '";</script>').replace('</body>', RELOAD + '</body>'));
+  res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' });
   res.end(body);
 });
 server.listen(PORT, '0.0.0.0', () => console.log(`\nUDRA screen served on port ${PORT}. Edits in screen/ reload the phone.\n`));
